@@ -6,6 +6,7 @@ import gsap from "gsap";
 import { card } from "@/components/constants/card";
 
 export default function Home() {
+
   useEffect(() => {
     gsap.registerPlugin(Flip);
 
