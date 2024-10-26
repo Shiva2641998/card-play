@@ -1,101 +1,151 @@
+"use client";
 import Image from "next/image";
+import React, { useEffect } from "react";
+import { Flip } from "gsap/all";
+import gsap from "gsap";
+import { card } from "@/components/constants/card";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  useEffect(() => {
+    gsap.registerPlugin(Flip);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+    const moveButton = document.getElementById("startGame");
+
+    moveButton.addEventListener("click", () => {
+      const containerB = document.getElementById("otherUserCard");
+      // Get the state of elements, but only if they exist in the DOM
+      const state = document.querySelectorAll(".card").length
+        ? Flip.getState(".card")
+        : null;
+
+      // Append all `.card` elements to `containerB`
+      const cards = document.querySelectorAll(".card");
+      cards.forEach((card) => {
+        containerB.appendChild(card);
+      });
+
+      if (state) {
+        Flip.from(state, {
+          duration: 0.6,
+          ease: "power2.inOut",
+          stagger: 0.1,
+        });
+      }
+    });
+
+    moveButton.addEventListener("click", () => {
+      const containerA = document.getElementById("myUserCard");
+      const leftDiv = document.getElementById("leftDiv");
+      // Get the state of elements, but only if they exist in the DOM
+      const statemycard = document.querySelectorAll(".mycard").length
+        ? Flip.getState(".mycard")
+        : null;
+
+      const stateleftCard = document.querySelectorAll(".leftCard").length
+        ? Flip.getState(".leftCard")
+        : null;
+
+      // Append all `.mycard` elements to `containerA`
+      const mecards = document.querySelectorAll(".mycard");
+      mecards.forEach((card) => {
+        containerA.appendChild(card);
+      });
+
+      const leftCard = document.querySelectorAll(".leftCard");
+      leftCard.forEach((card) => {
+        leftDiv.appendChild(card);
+      });
+
+      // Animate transitions if states were captured
+      if (statemycard) {
+        Flip.from(statemycard, {
+          duration: 0.6,
+          ease: "power2.inOut",
+          stagger: 0.1,
+        });
+      }
+
+      if (stateleftCard) {
+        Flip.from(stateleftCard, {
+          duration: 2,
+          ease: "power2.inOut",
+          stagger: 0.1,
+        });
+      }
+    });
+  }, []);
+
+  function getRandomItems(array, count = 10) {
+    return array
+      .sort(() => Math.random() - 0.5) // Shuffle the array
+      .slice(0, count); // Select the first 'count' items
+  }
+
+  const pickCard = (id) => {
+    const containerB = document.getElementById("target2");
+    // Get the state of elements, but only if they exist in the DOM
+    const state = Flip.getState(`#${id}`);
+
+    // Append all `.card` elements to `containerB`
+    const cards = document.querySelector(`#${id}`);
+    // cards.forEach((card) => {
+    containerB.appendChild(cards);
+    // });
+
+    if (state) {
+      Flip.from(state, {
+        absolute: true,
+        duration: 0.6,
+        ease: "expo.out",
+      });
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-screen items-center justify-between p-5 bg-[url(https://t4.ftcdn.net/jpg/06/87/21/91/360_F_687219162_XDD3L22Jn72GL4MxYfGShvAvDodsKwME.jpg)]">
+      <div className="flex justify-center h-60" id="otherUserCard"></div>
+
+      <div className="flex justify-between w-2/3 ">
+        <div className="h-60 w-40 relative" id="leftDiv"></div>
+        <div className="h-60 w-40 relative centerDiv" id="startGame">
+          {getRandomItems(card, 10).map((e, i) => (
+            <img
+              alt="image"
+              key={i}
+              src={
+                "https://m.media-amazon.com/images/I/81hSQ2pbEnL._AC_UF1000,1000_QL80_.jpg"
+              }
+              // style={{ marginLeft: `${(i*2)}px`}}
+              className={`w-40 h-60 -ml-7 border-2 rounded-lg shadow-lg  shadow-black leftCard`}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          ))}
+
+          {getRandomItems(card, 10).map((e, i) => (
+            <img
+              alt="image"
+              key={i}
+              src={e}
+              id={`card-${i}`}
+              className="w-40 h-60 -ml-7 cursor-pointer hover:-mt-4 mycard"
+              onClick={() => pickCard(`card-${i}`)}
+            />
+          ))}
+
+          {getRandomItems(card, 10).map((e, i) => (
+            <img
+              alt="image"
+              key={i}
+              src={
+                "https://m.media-amazon.com/images/I/81hSQ2pbEnL._AC_UF1000,1000_QL80_.jpg"
+              }
+              className="w-40 h-60 -ml-7 border-2 rounded-lg shadow-lg shadow-black card"
+            />
+          ))}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        <div className="h-60 w-40" id="target2"></div>
+      </div>
+
+      <div className="flex justify-center h-60" id="myUserCard"></div>
     </div>
   );
 }

@@ -19,3 +19,17 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+#leftDiv > img{
+  position: absolute;
+}
+#target2 > img{
+  position: absolute;
+}
+.centerDiv > img{
+  position: absolute;
+}
+
+#myUserCard > img{
+  transition: .2s all;
+}
