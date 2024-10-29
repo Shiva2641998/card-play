@@ -27,6 +27,9 @@ export default function Home() {
   const gameStart = useRef(false);
   const [startGame, setstartGame] = useState(false);
 
+  const CardDropSoundRef = useRef(new Audio('/card-sounds-35956.mp3'));
+  const DistributeCard = useRef(new Audio('/riffle-card-shuffle-104313.mp3'));
+
   function getTenRandomCard(card, n, setState, state) {
     let d = card
       .sort(() => 0.5 - Math.random())
@@ -104,6 +107,23 @@ export default function Home() {
     });
   };
 
+  const CardDropSoundRefplayAudio = () => {
+    CardDropSoundRef.current.play().catch(error => {
+      console.error("Error playing audio:", error);
+    });
+  };
+
+  const DistributeCardplayAudio = () => {
+    DistributeCard.current.play().catch(error => {
+      console.error("Error playing audio:", error);
+    });
+  };
+
+  const DistributeCardstopAudio = () => {
+    DistributeCard.current.pause();
+    DistributeCard.current.currentTime = 0; // Reset to the beginning
+  };
+
   useEffect(() => {
     gsap.registerPlugin(Flip);
 
@@ -113,6 +133,7 @@ export default function Home() {
       if (gameStart.current) {
         return;
       }
+      DistributeCardplayAudio()
       const containerB = document.getElementById("otherUserCard");
       // Get the state of elements, but only if they exist in the DOM
       const state = document.querySelectorAll(".card").length
@@ -131,6 +152,9 @@ export default function Home() {
           ease: "power2.inOut",
           rotateY: 180,
           stagger: 0.1,
+          onComplete: () => {
+            DistributeCardstopAudio()
+          }
         });
       }
     });
@@ -259,7 +283,10 @@ export default function Home() {
       Flip.from(state, {
         absolute: true,
         duration: 0.6,
-        ease: "expo.out",
+        ease: "sine.inOut",
+        onStart: () => {
+          CardDropSoundRefplayAudio();
+        },
         onComplete: () => {
           cards.classList.remove("mycard");
         },
@@ -306,8 +333,9 @@ export default function Home() {
       Flip.from(state, {
         absolute: true,
         duration: 0.6,
-        ease: "expo.out",
+        ease: "sine.inOut",
         onStart: () => {
+          CardDropSoundRefplayAudio();
           cards.classList.remove("leftCard");
           cards.classList.add("mycard");
           cards.setAttribute("src", event.url);
