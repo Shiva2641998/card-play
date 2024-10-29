@@ -12,14 +12,14 @@ const AdBanner = ({ dataAdSlot, dataAdFormat, dataFullWidthResponsive }) => {
   }, []);
 
   return (
-    <div className="w-[10%] mx-5">
+    <div className="w-[15%] m-5">
       <ins
-        class="adsbygoogle"
+        className="adsbygoogle"
         style={{ display: "block" }}
         data-ad-client="ca-pub-7147387469181788"
         data-ad-slot={dataAdSlot}
         data-ad-format={dataAdFormat}
-        data-full-width-responsive={dataFullWidthResponsive}
+        data-full-width-responsive={dataFullWidthResponsive.toString()}
       ></ins>
     </div>
   );
