@@ -354,9 +354,9 @@ export default function Home() {
   return (
     <div className="flex bg-[url(https://www.gin-rummy-online.com/game/assets/images/backgrounds/1920x1200/green_felt.jpg)]">
       <AdBanner
-        dataAdFormat="auto"
+        dataAdFormat={"auto"}
         dataFullWidthResponsive={'true'}
-        dataAdSlot="3970937194"
+        dataAdSlot={"3970937194"}
       />
       <div className="flex flex-col h-dvh items-center justify-around p-5 w-[80%]">
         <div
@@ -504,9 +504,9 @@ export default function Home() {
       </div>
 
       <AdBanner
-        dataAdFormat="auto"
+        dataAdFormat={"auto"}
         dataFullWidthResponsive={'true'}
-        dataAdSlot="2692189121"
+        dataAdSlot={"2692189121"}
       />
     </div>
   );
