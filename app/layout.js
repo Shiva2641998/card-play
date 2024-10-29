@@ -23,14 +23,16 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
       {/* <AdSense pId={'7147387469181788'} /> */}
-      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7147387469181788"
-     crossorigin="anonymous"></script>
+     
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7147387469181788"
+     crossorigin="anonymous"></script>
       </body>
+      
     </html>
   );
 }
