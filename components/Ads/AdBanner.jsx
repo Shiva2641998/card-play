@@ -19,7 +19,7 @@ const AdBanner = ({ dataAdSlot, dataAdFormat, dataFullWidthResponsive }) => {
         data-ad-client="ca-pub-7147387469181788"
         data-ad-slot={dataAdSlot}
         data-ad-format={dataAdFormat}
-        data-full-width-responsive={dataFullWidthResponsive.toString()}
+        data-full-width-responsive={dataFullWidthResponsive}
       ></ins>
     </div>
   );

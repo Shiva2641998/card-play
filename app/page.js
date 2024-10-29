@@ -355,7 +355,7 @@ export default function Home() {
     <div className="flex bg-[url(https://www.gin-rummy-online.com/game/assets/images/backgrounds/1920x1200/green_felt.jpg)]">
       <AdBanner
         dataAdFormat="auto"
-        dataFullWidthResponsive={true}
+        dataFullWidthResponsive={'true'}
         dataAdSlot="3970937194"
       />
       <div className="flex flex-col h-dvh items-center justify-around p-5 w-[80%]">
@@ -439,7 +439,7 @@ export default function Home() {
             id="target2"
           >
             {startGame && (
-              <div className="absolute -top-20 flex flex-col items-center">
+              <div className="absolute -top-16 flex flex-col items-center">
                 <img
                   src="https://www.gin-rummy-online.com/game/assets/images/players/pn103.png"
                   className="w-10 h-10 md:w-16 md:h-16"
@@ -505,8 +505,8 @@ export default function Home() {
 
       <AdBanner
         dataAdFormat="auto"
-        dataFullWidthResponsive={true}
-        dataAdSlot="3970937194"
+        dataFullWidthResponsive={'true'}
+        dataAdSlot="2692189121"
       />
     </div>
   );
