@@ -1,9 +1,16 @@
 "use client";
 import Image from "next/image";
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Flip } from "gsap/all";
 import gsap from "gsap";
 import { card } from "@/components/constants/card";
+import AdBanner from "@/components/Ads/AdBanner";
 
 export default function Home() {
   const [targetCard, settargetCard] = useState([]);
@@ -18,7 +25,7 @@ export default function Home() {
     targetCard: [],
   });
   const gameStart = useRef(false);
-  const [startGame, setstartGame] = useState(false)
+  const [startGame, setstartGame] = useState(false);
 
   function getTenRandomCard(card, n, setState, state) {
     let d = card
@@ -122,6 +129,7 @@ export default function Home() {
         Flip.from(state, {
           duration: 0.6,
           ease: "power2.inOut",
+          rotateY: 180,
           stagger: 0.1,
         });
       }
@@ -157,7 +165,7 @@ export default function Home() {
           onComplete: () => {
             cards.setAttribute("src", findCards.url);
             gameStart.current = true;
-            setstartGame(true)
+            setstartGame(true);
           },
         });
       }
@@ -186,6 +194,7 @@ export default function Home() {
 
       const leftCard = document.querySelectorAll(".leftCard");
       leftCard.forEach((card) => {
+        gsap.to(card, { rotationY: 180 });
         leftDiv.appendChild(card);
       });
 
@@ -194,7 +203,28 @@ export default function Home() {
         Flip.from(statemycard, {
           duration: 0.6,
           ease: "power2.inOut",
+          // rotateY: 180,
           stagger: 0.1,
+          onComplete: () => {
+            console.log("comming", statemycard);
+
+            statemycard.targets.map((card) => {
+              gsap.to(card, {
+                rotate: 180,
+                duration: 0.6,
+                onComplete: () => {
+                  // Remove all transformations or specific properties
+                  card.style.transform = ""; // Clear transform style
+                },
+              });
+
+              // Remove the src attribute if it's an <img> tag
+              const id = card.getAttribute("id");
+
+              const findCardInfo = findCard(id);
+              card.setAttribute("src", findCardInfo.url);
+            });
+          },
         });
       }
 
@@ -241,7 +271,7 @@ export default function Home() {
     let id = event?.target
       ? event.target.id.split("-")[1]
       : event.split("-")[1];
-      let find = card.filter((e) => e.id == id)?.[0];
+    let find = card.filter((e) => e.id == id)?.[0];
     return find;
   }
 
@@ -288,14 +318,14 @@ export default function Home() {
 
   const deadWood = useMemo(() => {
     let point = mePlayer.reduce((prev, total) => {
-        return prev += total.number
-    },0)
-    return {point, card: mePlayer}
-  }, [mePlayer])
+      return (prev += total.number);
+    }, 0);
+    return { point, card: mePlayer };
+  }, [mePlayer]);
 
   const mieldCard = useMemo(() => {
-    return shuffleArray(mePlayer).slice(0, 3)
-  }, [mePlayer])
+    return shuffleArray(mePlayer).slice(0, 3);
+  }, [mePlayer]);
 
   const cardClick = async (event) => {
     let list = event.target.classList.value;
@@ -322,105 +352,162 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col h-dvh items-center justify-around p-5 bg-[url(https://t4.ftcdn.net/jpg/06/87/21/91/360_F_687219162_XDD3L22Jn72GL4MxYfGShvAvDodsKwME.jpg)]">
-     
-      <div
-        className="flex justify-center items-start h-60"
-        id="otherUserCard"
-      ></div>
-       <button onClick={shuffleCards}>shffel</button>
-
-      <div className="flex justify-between items-center w-full md:w-2/3 p-5 h-36 md:h-60">
+    <div className="flex bg-[url(https://www.gin-rummy-online.com/game/assets/images/backgrounds/1920x1200/green_felt.jpg)]">
+      <AdBanner
+        dataAdFormat="auto"
+        dataFullWidthResponsive={true}
+        dataAdSlot="3970937194"
+      />
+      <div className="flex flex-col h-dvh items-center justify-around p-5 w-[80%]">
         <div
-          className="h-36 md:h-60 w-full flex justify-center relative"
-          id="leftDiv"
+          className="flex justify-center items-start h-60"
+          id="otherUserCard"
         ></div>
-        <div
-          className="h-60 w-full flex justify-center relative centerDiv"
-          id="startGame"
-        >
-          {fistAllCardRender.current.leftCard.map((e, i) => (
-            <img
-              alt="image"
-              key={i}
-              src={
-                //  e.url ||
-                "https://m.media-amazon.com/images/I/81hSQ2pbEnL._AC_UF1000,1000_QL80_.jpg"
-              }
-              // style={{ marginLeft: `${(i*2)}px`}}
-              id={`card-${e.id}`}
-              data-page={e.number}
-              // onClick={(event) => pickCard(e, event)}
-              onClick={(e) => cardClick(e)}
-              className={`w-14 h-36 md:w-32 md:h-44 cursor-pointer  leftCard`}
-            />
-          ))}
+        <button onClick={shuffleCards}>shffel</button>
 
-          {fistAllCardRender.current.targetCard.map((e, i) => (
-            <img
-              alt="image"
-              key={i}
-              src={
-                "https://m.media-amazon.com/images/I/81hSQ2pbEnL._AC_UF1000,1000_QL80_.jpg"
-              }
-              id={`card-${e.id}`}
-              data-page={e.number}
-              className="w-14 h-36 md:w-32 md:h-44 cursor-pointer targetCard"
-              // onClick={() => dropCard(`card-${e.id}`)}
-              onClick={(e) => cardClick(e)}
-            />
-          ))}
+        <div className="flex justify-between items-center w-full md:w-2/3 p-5 h-36 md:h-60">
+          <div
+            className="h-20 md:h-60 w-full flex justify-center items-center relative"
+            id="leftDiv"
+          ></div>
+          <div
+            className={`h-20 flex justify-center relative centerDiv w-96 md:w-80 transition-all`}
+            id="startGame"
+          >
+            {fistAllCardRender.current.leftCard.map((e, i) => (
+              <img
+                alt="image"
+                key={i}
+                src={
+                  //  e.url ||
+                  "https://www.gin-rummy-online.com/game/assets/images/backs/146x198/rhombus_blue.png"
+                }
+                // style={{ marginLeft: `${(i*2)}px`}}
+                id={`card-${e.id}`}
+                data-page={e.number}
+                // onClick={(event) => pickCard(e, event)}
+                onClick={(e) => cardClick(e)}
+                className={`w-14 h-24 md:w-32 md:h-44 cursor-pointer  leftCard`}
+              />
+            ))}
 
-          {fistAllCardRender.current.mePlayer.map((e, i) => (
-            <img
-              alt="image"
-              key={i}
-              src={e.url}
-              id={`card-${e.id}`}
-              data-page={e.number}
-              className="w-14 h-36 md:w-32 md:h-44 cursor-pointer mycard"
-              // onClick={() => dropCard(`card-${e.id}`)}
-              onClick={(e) => cardClick(e)}
-            />
-          ))}
+            {fistAllCardRender.current.targetCard.map((e, i) => (
+              <img
+                alt="image"
+                key={i}
+                src={
+                  "https://www.gin-rummy-online.com/game/assets/images/backs/146x198/rhombus_blue.png"
+                }
+                id={`card-${e.id}`}
+                data-page={e.number}
+                className="w-14 h-24 md:w-32 md:h-44 cursor-pointer targetCard"
+                // onClick={() => dropCard(`card-${e.id}`)}
+                onClick={(e) => cardClick(e)}
+              />
+            ))}
 
-          {fistAllCardRender.current.otherPlayer.map((e, i) => (
-            <img
-              alt="image"
-              key={i}
-              src={
-                "https://m.media-amazon.com/images/I/81hSQ2pbEnL._AC_UF1000,1000_QL80_.jpg"
-              }
-              className="w-14 h-36 md:w-32 md:h-44 card"
-            />
-          ))}
+            {fistAllCardRender.current.mePlayer.map((e, i) => (
+              <img
+                alt="image"
+                key={i}
+                // src={e.url}
+                src={
+                  //  e.url ||
+                  "https://www.gin-rummy-online.com/game/assets/images/backs/146x198/rhombus_blue.png"
+                }
+                id={`card-${e.id}`}
+                data-page={e.number}
+                className="w-14 h-24 md:w-32 md:h-44 cursor-pointer mycard"
+                // onClick={() => dropCard(`card-${e.id}`)}
+                onClick={(e) => cardClick(e)}
+              />
+            ))}
+
+            {fistAllCardRender.current.otherPlayer.map((e, i) => (
+              <img
+                alt="image"
+                key={i}
+                src={
+                  "https://www.gin-rummy-online.com/game/assets/images/backs/146x198/rhombus_blue.png"
+                }
+                className="w-14 h-24 md:w-32 md:h-44 card"
+              />
+            ))}
+          </div>
+          <div
+            className="h-36 md:h-60 w-full flex justify-center items-center relative"
+            id="target2"
+          >
+            {startGame && (
+              <div className="absolute -top-20 flex flex-col items-center">
+                <img
+                  src="https://www.gin-rummy-online.com/game/assets/images/players/pn103.png"
+                  className="w-10 h-10 md:w-16 md:h-16"
+                />
+                <span className="text-sm text-white font-bold py-2">
+                  Charlie (20)
+                </span>
+              </div>
+            )}
+          </div>
         </div>
-        <div className="h-36 md:h-60 w-full flex justify-center" id="target2"></div>
+
+        <div className="flex justify-between md:justify-around w-full md:w-2/3 px-0 py-10 md:m-2 ">
+          {startGame && (
+            <div className="mield bg-black bg-opacity-40 p-2 rounded-md relative">
+              <h1 className="text-white text-center capitalize font-semibold text-xs md:text-md pb-1.5">
+                Mield
+              </h1>
+              <div className="flex image-container rounded-md">
+                {mieldCard.slice(0, 3).map((e) => (
+                  <img
+                    src={e.url}
+                    className="w-2 h-3 md:w-8 md:h-10 partial-image"
+                  />
+                ))}
+              </div>
+
+              {startGame && (
+                <div className="absolute -bottom-28 flex flex-col items-center">
+                  <img
+                    src="https://ahoygamesdotcom.b-cdn.net/wp-content/uploads/2022/05/Icon_GinRummy_1024_rounded.png"
+                    className="w-16 h-14"
+                  />
+                  <span className="text-sm text-white font-bold py-2">
+                    You (20)
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {startGame && (
+            <div className="deadwood bg-black bg-opacity-40 p-2 rounded-md">
+              <h1 className="text-white text-center capitalize font-semibold text-xs md:text-md pb-1.5">
+                Deadwood ({deadWood.point})
+              </h1>
+              <div className="flex image-container rounded-md transition-[width] duration-300 ease-in-out">
+                {deadWood.card.map((e) => (
+                  <img
+                    src={e.url}
+                    className="w-2 h-3 md:w-8 md:h-10 partial-image"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+        <div
+          className="flex justify-center items-end md:items-end h-24 md:h-60 transition-w"
+          id="myUserCard"
+        ></div>
       </div>
 
-      <div className="flex justify-between md:justify-around w-full px-0 py-10 md:p-10">
-        {startGame && <div className="mield bg-black bg-opacity-40 p-2 rounded-md">
-          <h1 className="text-white text-center capitalize font-semibold text-xs md:text-md pb-1.5">Mield</h1>
-          <div className="flex image-container rounded-md">
-            {mieldCard.slice(0, 3).map((e) => (
-              <img src={e.url} className="w-5 h-5 md:w-10 md:h-10 partial-image" />
-            ))}
-          </div>
-        </div>}
-
-        {startGame && <div className="deadwood bg-black bg-opacity-40 p-2 rounded-md">
-          <h1 className="text-white text-center capitalize font-semibold text-xs md:text-md pb-1.5">Deadwood ({deadWood.point})</h1>
-          <div className="flex image-container rounded-md transition-[width] duration-300 ease-in-out">
-            {deadWood.card.map((e) => (
-              <img src={e.url} className="w-5 h-5 md:w-10 md:h-10 partial-image" />
-            ))}
-          </div>
-        </div>}
-      </div>
-      <div
-        className="flex justify-center items-end md:items-end h-60 transition-w"
-        id="myUserCard"
-      ></div>
+      <AdBanner
+        dataAdFormat="auto"
+        dataFullWidthResponsive={true}
+        dataAdSlot="3970937194"
+      />
     </div>
   );
 }

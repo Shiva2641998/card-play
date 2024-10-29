@@ -31,13 +31,13 @@ body {
 }
 
 #myUserCard > img, #otherUserCard > img{
-  margin-left: -1.7rem;
+  margin-left: -3.7rem;
 }
 
-#leftDiv > img, #target2 > img, #otherUserCard > img, #startGame > img{
+/* #leftDiv > img, #target2 > img, #otherUserCard > img, #startGame > img{
   border-radius: 5px;
   border: 2px solid white;
-}
+} */
 
 .image-container {
   /* width: 50px;  The width of the visible area */
@@ -52,4 +52,10 @@ body {
   overflow: hidden; /* Display the top-left part of the image */
   height: 100%;
   width: 20px;
+}
+
+@media only screen and (max-width: 600px) {
+  #myUserCard > img, #otherUserCard > img{
+    margin-left: -1.7rem;
+  }
 }
