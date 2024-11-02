@@ -20,17 +20,17 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-#leftDiv > img{
+#leftDiv > div{
   position: absolute;
 }
-#target2 > img{
+#target > div{
   position: absolute;
 }
-.centerDiv > img{
+.centerDiv > div{
   position: absolute;
 }
 
-#myUserCard > img, #otherUserCard > img{
+#myUserCard > div, #otherUserCard > div{
   margin-left: -3.7rem;
 }
 
@@ -54,8 +54,23 @@ body {
   width: 20px;
 }
 
+.pickCardHighLight > div{
+  box-shadow: 0px 0px 14px 3px rgb(72, 72, 208);
+}
+
+.meld::before {
+  content: "";
+  position: absolute;
+  top: 0px; /* 5px from the top inside the element */
+  left: 0;
+  right: 0;
+  height: 0; /* No height since it's a border */
+  border-top: 10px solid black; /* Adjust the border thickness and color */
+  border-radius: 5px 5px 0px 0px;
+}
+
 @media only screen and (max-width: 600px) {
-  #myUserCard > img, #otherUserCard > img{
+  #myUserCard > div, #otherUserCard > div{
     margin-left: -1.7rem;
   }
 }

@@ -1,7 +1,6 @@
 "use client";
 import Image from "next/image";
 import React, {
-  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -12,7 +11,6 @@ import { Flip } from "gsap/all";
 import gsap from "gsap";
 import { card } from "@/components/constants/card";
 import AdBanner from "@/components/Ads/AdBanner";
-import { debounce } from "@/components/constants";
 
 const cardBackImage =
   "https://www.gin-rummy-online.com/game/assets/images/backs/146x198/rhombus_blue.png";
@@ -31,40 +29,15 @@ export default function Home() {
   const gameStart = useRef(false);
   const [startGame, setstartGame] = useState(false);
 
-  const [myChance, setmyChance] = useState(true);
-  const [canPick, setCanPick] = useState(false);
-  const [endGame, setendGame] = useState(false);
-
   const CardDropSoundRef = useRef(new Audio("/card-sounds-35956.mp3"));
   const DistributeCard = useRef(new Audio("/riffle-card-shuffle-104313.mp3"));
-
-  useEffect(() => {
-    if (!myChance) {
-      setTimeout(() => {
-        let pc = getRandomItems(leftCard, 1)?.[0];
-        setleftCard((e) => {
-          return e.filter((e) => e.id != pc.id);
-        });
-        setotherPlayer((e) => {
-          return [...e, pc];
-        });
-        pickOtherCard(pc);
-      }, 1000);
-      setTimeout(() => {
-        let dc = getRandomItems(otherPlayer, 1)?.[0];
-        setotherPlayer((e) => {
-          return e.filter((e) => e.id != dc.id);
-        });
-        dropOtherCard(dc);
-      }, 2000);
-    }
-  }, [myChance]);
 
   function getTenRandomCard(card, n, setState, state) {
     let d = card
       .sort(() => 0.5 - Math.random())
       .slice(0, n)
       .sort((a, b) => a.number - b.number);
+    console.log(fistAllCardRender.current);
     fistAllCardRender.current = {
       ...fistAllCardRender.current,
       [state]: d,
@@ -78,15 +51,18 @@ export default function Home() {
 
   async function getCard() {
     let leftCard = await getTenRandomCard(card, 10, setmePlayer, "mePlayer");
+    console.log("length", leftCard?.length);
     let leftall = await getTenRandomCard(
       leftCard,
       10,
       setotherPlayer,
       "otherPlayer"
     );
+    // console.log("length-2", leftallcard?.length)
 
     let getOneCard = leftall.sort(() => 0.5 - Math.random()).slice(0, 1);
     let leftallCards = leftall.filter((e) => e.id != getOneCard[0]?.id);
+    // console.log("getOneCard",getOneCard)
     settargetCard(getOneCard);
     fistAllCardRender.current = {
       ...fistAllCardRender.current,
@@ -100,6 +76,38 @@ export default function Home() {
   useLayoutEffect(() => {
     getCard();
   }, []);
+
+  const shuffleArray = (array) => {
+    let shuffled = [...array];
+    console.log(shuffled.length, "shuffled.length");
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
+  const shuffleCards = () => {
+    // Capture the initial state of the cards
+    const container = document.getElementById("myUserCard");
+    const state = Flip.getState(container.children);
+
+    // Shuffle the card order
+    // Get the card elements into an array and shuffle them
+    const cards = Array.from(container.children);
+    const shuffledCards = shuffleArray(cards);
+
+    // Clear the container and re-append the shuffled elements
+    container.innerHTML = ""; // Clear the container
+    shuffledCards.forEach((card) => container.appendChild(card)); // Append shuffled cards
+
+    // Animate the shuffle transition
+    Flip.from(state, {
+      duration: 1,
+      ease: "power2.inOut",
+      // stagger: 0.05, // Add a slight delay between card flips
+    });
+  };
 
   const CardDropSoundRefplayAudio = () => {
     CardDropSoundRef.current.play().catch((error) => {
@@ -156,7 +164,9 @@ export default function Home() {
     const targetCards = document.querySelector(".targetCard");
     // cards.forEach((card) => {
     let id = targetCards.getAttribute("id");
+    console.log(id, "id");
     const findCards = await findCard(id);
+    console.log(findCards, "bb");
     targetcontainer.appendChild(targetCards);
     // });
 
@@ -167,9 +177,7 @@ export default function Home() {
         // rotateY: 360,
         // stagger: 0.1,
         onStart: () => {
-          console.log(targetCards, " targetCards");
-          // targetCards.querySelector("img").setAttribute("src", findCards.url);
-          targetCards.style.backgroundImage = `url(${findCards.url})`;
+          targetCards.setAttribute("src", findCards.url);
           gameStart.current = true;
           setstartGame(true);
         },
@@ -207,12 +215,13 @@ export default function Home() {
         // rotateY: 180,
         // stagger: 0.1,
         onStart: () => {
+          console.log("comming", statemycard);
+
           statemycard.targets.map((card) => {
             const id = card.getAttribute("id");
 
             const findCardInfo = findCard(id);
-            // card.querySelector("img").setAttribute("src", findCardInfo.url);
-            card.style.backgroundImage = `url(${findCardInfo.url})`;
+            card.setAttribute("src", findCardInfo.url);
           });
         },
       });
@@ -235,12 +244,13 @@ export default function Home() {
   }, []);
 
   function getRandomItems(array, count = 10) {
-    return array.sort(() => Math.random() - 0.5).slice(0, count);
+    return array
+      .sort(() => Math.random() - 0.5) // Shuffle the array
+      .slice(0, count); // Select the first 'count' items
   }
 
-  const pickOtherCard = (event) => {
-    
-    const containerB = document.getElementById("otherUserCard");
+  const dropOtherCard = (event) => {
+    const containerB = document.getElementById("target");
     // Get the state of elements, but only if they exist in the DOM
     const state = Flip.getState(`#card-${event.id}`);
 
@@ -248,7 +258,6 @@ export default function Home() {
     const cards = document.querySelector(`#card-${event.id}`);
     // cards.forEach((card) => {
     containerB.appendChild(cards);
-   
     // });
 
     if (state) {
@@ -259,7 +268,7 @@ export default function Home() {
         // rotationY: 90,
         ease: "sine.inOut",
         onStart: () => {
-          // cards.setAttribute("src", event.url);
+          cards.setAttribute("src", event.url);
           CardDropSoundRefplayAudio();
         },
         onComplete: () => {
@@ -269,15 +278,15 @@ export default function Home() {
     }
   };
 
-  const dropOtherCard = (event) => {
-    console.log("event:::", event)
-    const containerB = document.getElementById("target");
+  const pickOtherCard = (event) => {
+    // console.log(trigger)
+    const containerB = document.getElementById("otherUserCard");
     // Get the state of elements, but only if they exist in the DOM
     const state = Flip.getState(`#card-${event.id}`);
 
     // Append all `.card` elements to `containerB`
     const cards = document.querySelector(`#card-${event.id}`);
-    
+
     containerB.appendChild(cards);
 
     if (state) {
@@ -286,12 +295,9 @@ export default function Home() {
         duration: 0.6,
         ease: "sine.inOut",
         onStart: () => {
-          // CardDropSoundRefplayAudio();
-          // cards.classList.add("targetCard");
-          // cards.classList.remove("card");
-          // cards.querySelector("img").setAttribute("src", event.url);
-          cards.style.backgroundImage = `url(${event.url})`;
-          setmyChance(true);
+          CardDropSoundRefplayAudio();
+          cards.classList.add("card");
+          cards.setAttribute("src", cardBackImage);
         },
       });
     }
@@ -319,8 +325,6 @@ export default function Home() {
         onComplete: () => {
           cards.classList.remove("mycard");
           cards.classList.remove("card");
-          setCanPick(false);
-          setmyChance(false);
         },
       });
     }
@@ -335,6 +339,7 @@ export default function Home() {
   }
 
   const pickCard = (event) => {
+    // console.log(trigger)
     const containerB = document.getElementById("myUserCard");
     // Get the state of elements, but only if they exist in the DOM
     const state = Flip.getState(`#card-${event.id}`);
@@ -345,9 +350,7 @@ export default function Home() {
     const mycard = document.querySelectorAll(".mycard");
 
     for (let i = 0; i < mycard.length; i++) {
-      let num = parseInt(
-        mycard[i].getAttribute("data-page")
-      );
+      let num = parseInt(mycard[i].getAttribute("data-page"));
       if (num > event.number) {
         const parent = mycard[i].parentNode;
         parent.insertBefore(cards, mycard[i]);
@@ -371,80 +374,10 @@ export default function Home() {
           CardDropSoundRefplayAudio();
           cards.classList.remove("leftCard");
           cards.classList.add("mycard");
-          // cards.setAttribute("src", event.url);
-          cards.style.backgroundImage = `url(${event.url})`;
+          cards.setAttribute("src", event.url);
         },
       });
     }
-  };
-
-  function hasThreeOccurrencesOfThree(arr, findNum) {
-    // Count the number of occurrences of 3 in the array
-    const count = arr.filter((num) => num.number === findNum).length;
-
-    // Check if the count is exactly 3
-    return count >= 3;
-  }
-
-  const meldsCardFound = useMemo(() => {
-    // let point = mePlayer;
-    let mc = [...mePlayer]
-      .map((e) => (hasThreeOccurrencesOfThree(mePlayer, e.number) ? e : false))
-      .filter((d) => d);
-
-    console.log("mieldCard -", mc);
-    return mc;
-    // return { point, card: mePlayer };
-  }, [mePlayer]);
-
-  useEffect(() => {
-    if (meldsCardFound?.length > 0) {
-      shuffleCards(meldsCardFound);
-    }
-  }, [meldsCardFound]);
-
-  const shuffleArray = (array, meldsCard) => {
-    let shuffled = [...array];
-    let newArr = [];
-    console.log(shuffled, "shuffled.length", meldsCard);
-    for (let i = 0; i < shuffled.length - 1; i++) {
-      if (meldsCard?.includes(i)) {
-        newArr.unshift(shuffled[i]);
-        shuffled[i].classList.add("mieldCard");
-        shuffled[i].classList.remove("mycard");
-      } else {
-        shuffled[i].classList?.remove("mieldCard");
-        shuffled[i].classList?.add("mycard");
-        newArr.push(shuffled[i]);
-      }
-      // const j = Math.floor(Math.random() * (i + 1));
-      // [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    console.log("shuffled:::", newArr);
-    return newArr;
-  };
-
-  const shuffleCards = (meld) => {
-    console.log("meldsCard======>", meld);
-    // Capture the initial state of the cards
-    const container = document.getElementById("myUserCard");
-    const state = Flip.getState(container.children);
-
-    // Shuffle the card order
-    // Get the card elements into an array and shuffle them
-    const cards = Array.from(container.children);
-    const shuffledCards = shuffleArray(cards, meld);
-
-    // Clear the container and re-append the shuffled elements
-    container.innerHTML = ""; // Clear the container
-    shuffledCards.forEach((card) => container.appendChild(card)); // Append shuffled cards
-
-    // Animate the shuffle transition
-    Flip.from(state, {
-      duration: 1,
-      ease: "power2.inOut",
-      // stagger: 0.05, // Add a slight delay between card flips
-    });
   };
 
   const deadWood = useMemo(() => {
@@ -454,24 +387,14 @@ export default function Home() {
     return { point, card: mePlayer };
   }, [mePlayer]);
 
-  const deadWoodotherPlayer = useMemo(() => {
-    let point = otherPlayer.reduce((prev, total) => {
-      return (prev += total.number);
-    }, 0);
-    return { point, card: otherPlayer };
-  }, [otherPlayer]);
-
   const mieldCard = useMemo(() => {
     return shuffleArray(mePlayer).slice(0, 3);
   }, [mePlayer]);
 
-  const cardClick = debounce(async (event) => {
-    if (!myChance) return;
-
+  const cardClick = async (event) => {
     let list = event.target.classList.value;
-    console.log(list, "list");
+    // console.log(event)
     if (list.includes("mycard")) {
-      if (!canPick) return;
       let id = event.target.id;
       let findCards = await findCard(event);
       setmePlayer((e) => {
@@ -479,19 +402,6 @@ export default function Home() {
       });
       dropCard(id);
     } else if (list.includes("leftCard")) {
-      setCanPick(true);
-      let findCards = await findCard(event);
-      setleftCard((e) => {
-        return e.filter((e) => e.id != findCards.id);
-      });
-      setmePlayer((e) => {
-        return [...e, findCards]
-          .filter((e) => e)
-          .sort((a, b) => a.number - b.number);
-      });
-      pickCard(findCards);
-    } else if (list.includes("target")) {
-      setCanPick(true);
       let findCards = await findCard(event);
       setleftCard((e) => {
         return e.filter((e) => e.id != findCards.id);
@@ -503,11 +413,11 @@ export default function Home() {
       });
       pickCard(findCards);
     }
-  }, 200);
+  };
 
   const OtherUserCardClick = async (event) => {
     let list = event.target.classList.value;
-
+    // console.log(event)
     if (list.includes("card")) {
       let id = event.target.id;
       let findCards = await findCard(event);
@@ -545,30 +455,93 @@ export default function Home() {
           </div>
         </div>
       )}
-
       <AdBanner
         dataAdFormat={"auto"}
         dataFullWidthResponsive={"true"}
         dataAdSlot={"3970937194"}
       />
-
       <div className="flex flex-col h-dvh items-center justify-around p-1.5 w-[80%]">
+
         <div
-          className="flex justify-center items-start h-40"
+          className="flex justify-center items-start h-60"
           id="otherUserCard"
         ></div>
 
-        <div className="flex justify-between md:justify-around w-full md:w-2/3 px-0 md:m-2 py-3">
-          <div></div>
-          {endGame ? (
-            <div className="deadwood bg-black bg-opacity-40 p-2 rounded-md">
-              <h1 className="text-white text-center capitalize font-semibold text-xs md:text-md pb-1.5">
-                Deadwood ({deadWoodotherPlayer.point})
-              </h1>
-            </div>
-          ) : (
-            <div className="w-full justify-end flex mr-20">
-              <div className="flex flex-col items-center justify-end ">
+        <button onClick={shuffleCards}>shffel</button>
+
+        <div className="flex justify-between items-center w-full md:w-2/3 p-5 h-36 md:h-60">
+          <div
+            className="h-20 md:h-60 w-full flex justify-center items-center relative"
+            id="leftDiv"
+          ></div>
+          <div
+            className={`h-20 flex justify-center relative centerDiv w-96 md:w-80 transition-all`}
+            id="startGame"
+          >
+            {fistAllCardRender.current.leftCard.map((e, i) => (
+              <img
+                alt="image"
+                key={i}
+                src={
+                  //  e.url ||
+                  cardBackImage
+                }
+                // style={{ marginLeft: `${(i*2)}px`}}
+                id={`card-${e.id}`}
+                data-page={e.number}
+                // onClick={(event) => pickCard(e, event)}
+                onClick={(e) => cardClick(e)}
+                className={`w-14 h-24 md:w-32 md:h-44 cursor-pointer  leftCard`}
+              />
+            ))}
+
+            {fistAllCardRender.current.targetCard.map((e, i) => (
+              <img
+                alt="image"
+                key={i}
+                src={cardBackImage}
+                id={`card-${e.id}`}
+                data-page={e.number}
+                className="w-14 h-24 md:w-32 md:h-44 cursor-pointer targetCard"
+                // onClick={() => dropCard(`card-${e.id}`)}
+                onClick={(e) => cardClick(e)}
+              />
+            ))}
+
+            {fistAllCardRender.current.mePlayer.map((e, i) => (
+              <img
+                alt="image"
+                key={i}
+                // src={e.url}
+                src={
+                  //  e.url ||
+                  cardBackImage
+                }
+                id={`card-${e.id}`}
+                data-page={e.number}
+                className="w-14 h-24 md:w-32 md:h-44 cursor-pointer mycard"
+                // onClick={() => dropCard(`card-${e.id}`)}
+                onClick={(e) => cardClick(e)}
+              />
+            ))}
+
+            {fistAllCardRender.current.otherPlayer.map((e, i) => (
+              <img
+                alt="image"
+                key={i}
+                id={`card-${e.id}`}
+                src={cardBackImage}
+                className="w-14 h-24 md:w-32 md:h-44 card"
+                onClick={(e) => OtherUserCardClick(e)}
+              />
+            ))}
+          </div>
+          <div
+            className="h-36 md:h-60 w-full flex justify-center items-center relative pickCardHighLight"
+            id="target"
+          >
+            {startGame && (
+              <div className="absolute -top-20 flex flex-col items-center">
                 <img
                   src="https://www.gin-rummy-online.com/game/assets/images/players/pn103.png"
                   className="w-10 h-10 md:w-16 md:h-16"
@@ -577,125 +550,12 @@ export default function Home() {
                   Charlie (20)
                 </span>
               </div>
-            </div>
-          )}
-        </div>
-
-        {/* <button onClick={shuffleCards}>shffel</button> */}
-
-        <div className="flex justify-between items-center w-full md:w-2/3 h-36 md:h-60">
-          <div
-            className="h-20 md:h-60 w-full flex justify-center items-center relative"
-            id="leftDiv"
-          ></div>
-
-          <div
-            className={`h-20 flex justify-center relative centerDiv w-96 md:w-80 transition-all`}
-            id="startGame"
-          >
-            {fistAllCardRender.current.leftCard.map((e, i) => (
-              <div
-                id={`card-${e.id}`}
-                key={`card-${e.id}`}
-                data-page={e.number}
-                onClick={(e) => cardClick(e)}
-                className="leftCard w-14 h-24 md:w-32 md:h-44 z-10 bg-no-repeat bg-contain bg-center overflow-hidden"
-                style={{ backgroundImage: `url(${cardBackImage})` }}
-              >
-                {/* <img
-                alt="image"
-                key={i}
-                src={
-                  //  e.url ||
-                  cardBackImage
-                }
-                // style={{ marginLeft: `${(i*2)}px`}}
-                
-                
-                // onClick={(event) => pickCard(e, event)}
-                // onClick={(e) => cardClick(e)}
-                className={`w-14 h-24 md:w-32 md:h-44 cursor-pointer select-none`}
-              /> */}
-              </div>
-            ))}
-
-            {fistAllCardRender.current.targetCard.map((e, i) => (
-              <div
-              id={`card-${e.id}`}
-              key={`card-${e.id}`}
-              data-page={e.number}
-              onClick={(e) => cardClick(e)}
-              className="targetCard w-14 h-24 md:w-32 md:h-44 z-10 bg-no-repeat bg-contain bg-center overflow-hidden"
-              style={{ backgroundImage: `url(${cardBackImage})` }}
-              >
-                {/* <img
-                  alt="image"
-                  key={i}
-                  src={cardBackImage}
-                  // id={`card-${e.id}`}
-                  data-page={e.number}
-                  className="w-14 h-24 md:w-32 md:h-44 cursor-pointer "
-                  // onClick={() => dropCard(`card-${e.id}`)}
-                  // onClick={(e) => cardClick(e)}
-                /> */}
-              </div>
-            ))}
-
-            {fistAllCardRender.current.mePlayer.map((e, i) => (
-              <div
-              id={`card-${e.id}`}
-              key={`card-${e.id}`}
-              data-page={e.number}
-              onClick={(e) => cardClick(e)}
-              className="mycard w-14 h-24 md:w-32 md:h-44 z-10 bg-no-repeat bg-contain bg-center overflow-hidden"
-              style={{ backgroundImage: `url(${cardBackImage})` }}
-              >
-                {/* <img
-                  alt="image"
-                  key={i}
-                  // src={e.url}
-                  src={
-                    //  e.url ||
-                    cardBackImage
-                  }
-                  // id={`card-${e.id}`}
-                  data-page={e.number}
-                  className="w-14 h-24 md:w-32 md:h-44 cursor-pointer "
-                  // onClick={() => dropCard(`card-${e.id}`)}
-                  // onClick={(e) => cardClick(e)}
-                /> */}
-              </div>
-            ))}
-
-            {fistAllCardRender.current.otherPlayer.map((e, i) => (
-              <div
-              id={`card-${e.id}`}
-              key={`card-${e.id}`}
-              data-page={e.number}
-              onClick={(e) => cardClick(e)}
-              className="card w-14 h-24 md:w-32 md:h-44 z-10 bg-no-repeat bg-contain bg-center overflow-hidden"
-              style={{ backgroundImage: `url(${cardBackImage})` }}
-              >
-                {/* <img
-                  alt="image"
-                  key={i}
-                  // id={`card-${e.id}`}
-                  src={cardBackImage}
-                  className="w-14 h-24 md:w-32 md:h-44"
-                  // onClick={(e) => cardClick(e)}
-                /> */}
-              </div>
-            ))}
+            )}
           </div>
-
-          <div
-            className="h-36 md:h-60 w-full flex justify-center items-center relative pickCardHighLight"
-            id="target"
-          ></div>
         </div>
 
         <div className="flex justify-between md:justify-around w-full md:w-2/3 px-0 py-10 md:m-2 ">
-          {endGame ? (
+          {startGame && (
             <div className="mield bg-black bg-opacity-40 p-2 rounded-md relative">
               <h1 className="text-white text-center capitalize font-semibold text-xs md:text-md pb-1.5">
                 Mield
@@ -708,16 +568,18 @@ export default function Home() {
                   />
                 ))}
               </div>
-            </div>
-          ) : (
-            <div className=" flex flex-col items-center">
-              <img
-                src="https://ahoygamesdotcom.b-cdn.net/wp-content/uploads/2022/05/Icon_GinRummy_1024_rounded.png"
-                className="w-16 h-14"
-              />
-              <span className="text-sm text-white font-bold py-2">
-                You (20)
-              </span>
+
+              {startGame && (
+                <div className="absolute -bottom-28 flex flex-col items-center">
+                  <img
+                    src="https://ahoygamesdotcom.b-cdn.net/wp-content/uploads/2022/05/Icon_GinRummy_1024_rounded.png"
+                    className="w-16 h-14"
+                  />
+                  <span className="text-sm text-white font-bold py-2">
+                    You (20)
+                  </span>
+                </div>
+              )}
             </div>
           )}
 
@@ -739,7 +601,7 @@ export default function Home() {
         </div>
 
         <div
-          className="flex justify-center items-end md:items-end h-24 md:h-36 transition-w"
+          className="flex justify-center items-end md:items-end h-24 md:h-60 transition-w"
           id="myUserCard"
         ></div>
       </div>
