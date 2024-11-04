@@ -29,8 +29,8 @@ export default function Home() {
   const gameStart = useRef(false);
   const [startGame, setstartGame] = useState(false);
 
-  const CardDropSoundRef = useRef(new Audio("/card-sounds-35956.mp3"));
-  const DistributeCard = useRef(new Audio("/riffle-card-shuffle-104313.mp3"));
+  const CardDropSoundRef = useRef();
+  const DistributeCard = useRef();
 
   function getTenRandomCard(card, n, setState, state) {
     let d = card
