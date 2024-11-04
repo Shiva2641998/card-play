@@ -110,25 +110,27 @@ export default function Home() {
   }
 
   useLayoutEffect(() => {
-    CardDropSoundRef.current =  new Audio("/card-sounds-35956.mp3");
-    DistributeCard.current =  new Audio("/riffle-card-shuffle-104313.mp3");
+    if (typeof window !== "undefined") {
+      CardDropSoundRef.current =  document.getElementById('cardDropSound');
+      DistributeCard.current =  document.getElementById('distributeCardSound');
+    }
     getCard();
   }, []);
 
   const CardDropSoundRefplayAudio = () => {
-    CardDropSoundRef.current.play().catch((error) => {
+    CardDropSoundRef.current?.play().catch((error) => {
       console.error("Error playing audio:", error);
     });
   };
 
   const DistributeCardplayAudio = () => {
-    DistributeCard.current.play().catch((error) => {
+    DistributeCard.current?.play().catch((error) => {
       console.error("Error playing audio:", error);
     });
   };
 
   const DistributeCardstopAudio = () => {
-    DistributeCard.current.pause();
+    DistributeCard.current?.pause();
     DistributeCard.current.currentTime = 0; // Reset to the beginning
   };
 
@@ -293,7 +295,7 @@ export default function Home() {
 
     // Append all `.card` elements to `containerB`
     const cards = await document.querySelector(`#card-${event.id}`);
-    
+
     containerB.appendChild(cards);
     
 
@@ -549,6 +551,10 @@ export default function Home() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-[url(https://www.gin-rummy-online.com/game/assets/images/backgrounds/1920x1200/green_felt.jpg)]">
+      
+       <audio id="cardDropSound" src="/card-sounds-35956.mp3" preload="auto" />
+      <audio id="distributeCardSound" src="/riffle-card-shuffle-104313.mp3" preload="auto" />
+
       {!startGame && (
         <div className="bg-black bg-opacity-70 w-screen h-screen fixed top-0 left-0 z-[10000]">
           <div className="flex justify-center items-center h-screen flex-col">
