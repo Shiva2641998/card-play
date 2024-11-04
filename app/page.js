@@ -35,28 +35,40 @@ export default function Home() {
   const [canPick, setCanPick] = useState(false);
   const [endGame, setendGame] = useState(false);
 
-  const CardDropSoundRef = useRef(new Audio("/card-sounds-35956.mp3"));
-  const DistributeCard = useRef(new Audio("/riffle-card-shuffle-104313.mp3"));
+  const CardDropSoundRef = useRef();
+  const DistributeCard = useRef();
 
   useEffect(() => {
     if (!myChance) {
-      setTimeout(() => {
+      const pickTimeout = setTimeout(() => {
+        // Simulate picking a card
         let pc = getRandomItems(leftCard, 1)?.[0];
-        setleftCard((e) => {
-          return e.filter((e) => e.id != pc.id);
+        setleftCard((prevCards) => {
+          return prevCards.filter((card) => card.id !== pc.id);
         });
-        setotherPlayer((e) => {
-          return [...e, pc];
+        setotherPlayer((prevOtherPlayer) => {
+          let d = [...prevOtherPlayer, pc];
+          return d;
         });
         pickOtherCard(pc);
-      }, 1000);
-      setTimeout(() => {
+      }, 2000);
+  
+      const dropTimeout = setTimeout(() => {
         let dc = getRandomItems(otherPlayer, 1)?.[0];
-        setotherPlayer((e) => {
-          return e.filter((e) => e.id != dc.id);
+        // let d = otherPlayer.filter((card) => card.id !== dc.id);
+        // setotherPlayer(d);
+        setotherPlayer((prevOtherPlayer) => {
+          let d = prevOtherPlayer.filter((card) => card.id !== dc.id)
+          return d;
         });
         dropOtherCard(dc);
-      }, 2000);
+      }, 3000);
+  
+      // Cleanup the timeouts when the component unmounts or `myChance` changes
+      return () => {
+        clearTimeout(pickTimeout);
+        clearTimeout(dropTimeout);
+      };
     }
   }, [myChance]);
 
@@ -98,6 +110,8 @@ export default function Home() {
   }
 
   useLayoutEffect(() => {
+    CardDropSoundRef.current =  new Audio("/card-sounds-35956.mp3");
+    DistributeCard.current =  new Audio("/riffle-card-shuffle-104313.mp3");
     getCard();
   }, []);
 
@@ -239,7 +253,7 @@ export default function Home() {
   }
 
   const pickOtherCard = (event) => {
-    
+    console.log("event:::::,,,", event)
     const containerB = document.getElementById("otherUserCard");
     // Get the state of elements, but only if they exist in the DOM
     const state = Flip.getState(`#card-${event.id}`);
@@ -261,24 +275,27 @@ export default function Home() {
         onStart: () => {
           // cards.setAttribute("src", event.url);
           CardDropSoundRefplayAudio();
+          cards.classList.remove("leftCard");
+          cards.classList.add("card");
         },
         onComplete: () => {
-          cards.classList.remove("card");
+          
         },
       });
     }
   };
 
-  const dropOtherCard = (event) => {
+  const dropOtherCard = async(event) => {
     console.log("event:::", event)
-    const containerB = document.getElementById("target");
+    const containerB = await document.getElementById("target");
     // Get the state of elements, but only if they exist in the DOM
-    const state = Flip.getState(`#card-${event.id}`);
+    const state = await Flip.getState(`#card-${event.id}`);
 
     // Append all `.card` elements to `containerB`
-    const cards = document.querySelector(`#card-${event.id}`);
+    const cards = await document.querySelector(`#card-${event.id}`);
     
     containerB.appendChild(cards);
+    
 
     if (state) {
       Flip.from(state, {
@@ -287,8 +304,8 @@ export default function Home() {
         ease: "sine.inOut",
         onStart: () => {
           // CardDropSoundRefplayAudio();
-          // cards.classList.add("targetCard");
-          // cards.classList.remove("card");
+          cards.classList.add("targetCard");
+          cards.classList.remove("card");
           // cards.querySelector("img").setAttribute("src", event.url);
           cards.style.backgroundImage = `url(${event.url})`;
           setmyChance(true);
@@ -582,7 +599,7 @@ export default function Home() {
         </div>
 
         {/* <button onClick={shuffleCards}>shffel</button> */}
-
+        
         <div className="flex justify-between items-center w-full md:w-2/3 h-36 md:h-60">
           <div
             className="h-20 md:h-60 w-full flex justify-center items-center relative"
@@ -602,20 +619,6 @@ export default function Home() {
                 className="leftCard w-14 h-24 md:w-32 md:h-44 z-10 bg-no-repeat bg-contain bg-center overflow-hidden"
                 style={{ backgroundImage: `url(${cardBackImage})` }}
               >
-                {/* <img
-                alt="image"
-                key={i}
-                src={
-                  //  e.url ||
-                  cardBackImage
-                }
-                // style={{ marginLeft: `${(i*2)}px`}}
-                
-                
-                // onClick={(event) => pickCard(e, event)}
-                // onClick={(e) => cardClick(e)}
-                className={`w-14 h-24 md:w-32 md:h-44 cursor-pointer select-none`}
-              /> */}
               </div>
             ))}
 
@@ -628,16 +631,6 @@ export default function Home() {
               className="targetCard w-14 h-24 md:w-32 md:h-44 z-10 bg-no-repeat bg-contain bg-center overflow-hidden"
               style={{ backgroundImage: `url(${cardBackImage})` }}
               >
-                {/* <img
-                  alt="image"
-                  key={i}
-                  src={cardBackImage}
-                  // id={`card-${e.id}`}
-                  data-page={e.number}
-                  className="w-14 h-24 md:w-32 md:h-44 cursor-pointer "
-                  // onClick={() => dropCard(`card-${e.id}`)}
-                  // onClick={(e) => cardClick(e)}
-                /> */}
               </div>
             ))}
 
@@ -650,20 +643,6 @@ export default function Home() {
               className="mycard w-14 h-24 md:w-32 md:h-44 z-10 bg-no-repeat bg-contain bg-center overflow-hidden"
               style={{ backgroundImage: `url(${cardBackImage})` }}
               >
-                {/* <img
-                  alt="image"
-                  key={i}
-                  // src={e.url}
-                  src={
-                    //  e.url ||
-                    cardBackImage
-                  }
-                  // id={`card-${e.id}`}
-                  data-page={e.number}
-                  className="w-14 h-24 md:w-32 md:h-44 cursor-pointer "
-                  // onClick={() => dropCard(`card-${e.id}`)}
-                  // onClick={(e) => cardClick(e)}
-                /> */}
               </div>
             ))}
 
@@ -676,14 +655,6 @@ export default function Home() {
               className="card w-14 h-24 md:w-32 md:h-44 z-10 bg-no-repeat bg-contain bg-center overflow-hidden"
               style={{ backgroundImage: `url(${cardBackImage})` }}
               >
-                {/* <img
-                  alt="image"
-                  key={i}
-                  // id={`card-${e.id}`}
-                  src={cardBackImage}
-                  className="w-14 h-24 md:w-32 md:h-44"
-                  // onClick={(e) => cardClick(e)}
-                /> */}
               </div>
             ))}
           </div>
