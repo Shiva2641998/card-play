@@ -110,24 +110,24 @@ export default function Home() {
   };
 
   const CardDropSoundRefplayAudio = () => {
-    CardDropSoundRef.current.play().catch((error) => {
+    CardDropSoundRef.current?.play().catch((error) => {
       console.error("Error playing audio:", error);
     });
   };
 
   const DistributeCardplayAudio = () => {
-    DistributeCard.current.play().catch((error) => {
+    DistributeCard.current?.play().catch((error) => {
       console.error("Error playing audio:", error);
     });
   };
 
   const DistributeCardstopAudio = () => {
-    DistributeCard.current.pause();
+    DistributeCard.current?.pause();
     DistributeCard.current.currentTime = 0; // Reset to the beginning
   };
 
   const GimRummyStart = async () => {
-    DistributeCardplayAudio();
+    // DistributeCardplayAudio();
     // other Player Card
     const otherUserCardDiv = document.getElementById("otherUserCard");
     // Get the state of elements, but only if they exist in the DOM
@@ -269,7 +269,7 @@ export default function Home() {
         ease: "sine.inOut",
         onStart: () => {
           cards.setAttribute("src", event.url);
-          CardDropSoundRefplayAudio();
+          // CardDropSoundRefplayAudio();
         },
         onComplete: () => {
           cards.classList.remove("card");
@@ -295,7 +295,7 @@ export default function Home() {
         duration: 0.6,
         ease: "sine.inOut",
         onStart: () => {
-          CardDropSoundRefplayAudio();
+          // CardDropSoundRefplayAudio();
           cards.classList.add("card");
           cards.setAttribute("src", cardBackImage);
         },
@@ -320,7 +320,7 @@ export default function Home() {
         duration: 0.6,
         ease: "sine.inOut",
         onStart: () => {
-          CardDropSoundRefplayAudio();
+          // CardDropSoundRefplayAudio();
         },
         onComplete: () => {
           cards.classList.remove("mycard");
@@ -371,7 +371,7 @@ export default function Home() {
         duration: 0.6,
         ease: "sine.inOut",
         onStart: () => {
-          CardDropSoundRefplayAudio();
+          // CardDropSoundRefplayAudio();
           cards.classList.remove("leftCard");
           cards.classList.add("mycard");
           cards.setAttribute("src", event.url);

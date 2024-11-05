@@ -34,43 +34,38 @@ export default function Home() {
   const [myChance, setmyChance] = useState(true);
   const [canPick, setCanPick] = useState(false);
   const [endGame, setendGame] = useState(false);
+  const [onlyTargetPick, setonlyTargetPick] = useState(true)
 
   const CardDropSoundRef = useRef();
   const DistributeCard = useRef();
 
-  useEffect(() => {
+  const pickTimeout = () => {
+    // Simulate picking a card
     if (!myChance) {
-      const pickTimeout = setTimeout(() => {
-        // Simulate picking a card
-        let pc = getRandomItems(leftCard, 1)?.[0];
-        setleftCard((prevCards) => {
-          return prevCards.filter((card) => card.id !== pc.id);
-        });
-        setotherPlayer((prevOtherPlayer) => {
-          let d = [...prevOtherPlayer, pc];
-          return d;
-        });
-        pickOtherCard(pc);
-      }, 2000);
-  
-      const dropTimeout = setTimeout(() => {
-        let dc = getRandomItems(otherPlayer, 1)?.[0];
-        // let d = otherPlayer.filter((card) => card.id !== dc.id);
-        // setotherPlayer(d);
-        setotherPlayer((prevOtherPlayer) => {
-          let d = prevOtherPlayer.filter((card) => card.id !== dc.id)
-          return d;
-        });
-        dropOtherCard(dc);
-      }, 3000);
-  
-      // Cleanup the timeouts when the component unmounts or `myChance` changes
-      return () => {
-        clearTimeout(pickTimeout);
-        clearTimeout(dropTimeout);
-      };
+    let pc = getRandomItems(leftCard, 1)?.[0];
+    setleftCard((prevCards) => {
+      return prevCards.filter((card) => card.id !== pc.id);
+    });
+    setotherPlayer((prevOtherPlayer) => {
+      let d = [...prevOtherPlayer, pc];
+      return d;
+    });
+    pickOtherCard(pc);
+  }
+  };
+
+  const dropTimeout = () => {
+    if (!myChance) {
+    let dc = getRandomItems(otherPlayer, 1)?.[0];
+    // let d = otherPlayer.filter((card) => card.id !== dc.id);
+    // setotherPlayer(d);
+    setotherPlayer((prevOtherPlayer) => {
+      let d = prevOtherPlayer.filter((card) => card.id !== dc.id)
+      return d;
+    });
+    dropOtherCard(dc);
     }
-  }, [myChance]);
+  };
 
   function getTenRandomCard(card, n, setState, state) {
     let d = card
@@ -135,7 +130,7 @@ export default function Home() {
   };
 
   const GimRummyStart = async () => {
-    DistributeCardplayAudio();
+    // DistributeCardplayAudio();
     // other Player Card
     const otherUserCardDiv = document.getElementById("otherUserCard");
     // Get the state of elements, but only if they exist in the DOM
@@ -250,24 +245,23 @@ export default function Home() {
     }, 1000);
   }, []);
 
+  
+
   function getRandomItems(array, count = 10) {
     return array.sort(() => Math.random() - 0.5).slice(0, count);
   }
 
   const pickOtherCard = (event) => {
-    console.log("event:::::,,,", event)
+
     const containerB = document.getElementById("otherUserCard");
     // Get the state of elements, but only if they exist in the DOM
     const state = Flip.getState(`#card-${event.id}`);
 
     // Append all `.card` elements to `containerB`
-    const cards = document.querySelector(`#card-${event.id}`);
-    // cards.forEach((card) => {
-    containerB.appendChild(cards);
-   
-    // });
+    const cards = document.getElementById(`card-${event.id}`);
 
-    if (state) {
+    containerB.appendChild(cards)
+
       Flip.from(state, {
         // absolute: true,
         duration: 0.6,
@@ -284,22 +278,21 @@ export default function Home() {
           
         },
       });
-    }
+
   };
 
   const dropOtherCard = async(event) => {
-    console.log("event:::", event)
-    const containerB = await document.getElementById("target");
+    console.log("event:::", event , "mmmm")
+    
+    const containerB = document.getElementById("target");
     // Get the state of elements, but only if they exist in the DOM
-    const state = await Flip.getState(`#card-${event.id}`);
+    const state = Flip.getState(`#card-${event.id}`);
 
     // Append all `.card` elements to `containerB`
-    const cards = await document.querySelector(`#card-${event.id}`);
+    const cards = document.getElementById(`card-${event.id}`);
 
-    containerB.appendChild(cards);
-    
+    containerB.appendChild(cards)
 
-    if (state) {
       Flip.from(state, {
         absolute: true,
         duration: 0.6,
@@ -313,7 +306,6 @@ export default function Home() {
           setmyChance(true);
         },
       });
-    }
   };
 
   const dropCard = (id) => {
@@ -389,6 +381,7 @@ export default function Home() {
         onStart: () => {
           CardDropSoundRefplayAudio();
           cards.classList.remove("leftCard");
+          cards.classList.remove("targetCard");
           cards.classList.add("mycard");
           // cards.setAttribute("src", event.url);
           cards.style.backgroundImage = `url(${event.url})`;
@@ -423,11 +416,15 @@ export default function Home() {
   }, [meldsCardFound]);
 
   const shuffleArray = (array, meldsCard) => {
+    if(meldsCard?.length > 0){
+      
     let shuffled = [...array];
     let newArr = [];
     console.log(shuffled, "shuffled.length", meldsCard);
-    for (let i = 0; i < shuffled.length - 1; i++) {
-      if (meldsCard?.includes(i)) {
+    for (let i = 0; i < shuffled.length; i++) {
+      let cardIds = meldsCard?.map((e) => `card-${e.id}`);
+      console.log("cardIds", cardIds)
+      if (cardIds.includes(shuffled[i].id)) {
         newArr.unshift(shuffled[i]);
         shuffled[i].classList.add("mieldCard");
         shuffled[i].classList.remove("mycard");
@@ -439,24 +436,29 @@ export default function Home() {
       // const j = Math.floor(Math.random() * (i + 1));
       // [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
-    console.log("shuffled:::", newArr);
     return newArr;
+
+  }else{
+    return []
+  }
   };
 
   const shuffleCards = (meld) => {
-    console.log("meldsCard======>", meld);
     // Capture the initial state of the cards
     const container = document.getElementById("myUserCard");
+
+
     const state = Flip.getState(container.children);
 
     // Shuffle the card order
     // Get the card elements into an array and shuffle them
     const cards = Array.from(container.children);
-    const shuffledCards = shuffleArray(cards, meld);
+    console.log("cards", cards)
+    const shuffledCards = shuffleArray(cards.filter((e) => !e.className.includes("mieldCard")), meld);
 
     // Clear the container and re-append the shuffled elements
     container.innerHTML = ""; // Clear the container
-    shuffledCards.forEach((card) => container.appendChild(card)); // Append shuffled cards
+    [...cards.filter((e) => e.className.includes("mieldCard")), ...shuffledCards].forEach((card) => container.appendChild(card)); // Append shuffled cards
 
     // Animate the shuffle transition
     Flip.from(state, {
@@ -467,11 +469,14 @@ export default function Home() {
   };
 
   const deadWood = useMemo(() => {
-    let point = mePlayer.reduce((prev, total) => {
+    let filterIds = meldsCardFound?.length > 0 ? meldsCardFound.map((d) => d.id) : [];
+    let newCard = mePlayer.filter((e) => filterIds?.length > 0 ? !filterIds.includes(e.id) : e)
+    console.log(newCard , "meldsCardFound", meldsCardFound , mePlayer)
+    let point = newCard.reduce((prev, total) => {
       return (prev += total.number);
     }, 0);
-    return { point, card: mePlayer };
-  }, [mePlayer]);
+    return { point, card: newCard };
+  }, [mePlayer, meldsCardFound]);
 
   const deadWoodotherPlayer = useMemo(() => {
     let point = otherPlayer.reduce((prev, total) => {
@@ -498,6 +503,8 @@ export default function Home() {
       });
       dropCard(id);
     } else if (list.includes("leftCard")) {
+      if (canPick) return;
+      if (onlyTargetPick) return;
       setCanPick(true);
       let findCards = await findCard(event);
       setleftCard((e) => {
@@ -510,6 +517,7 @@ export default function Home() {
       });
       pickCard(findCards);
     } else if (list.includes("target")) {
+      if (canPick) return;
       setCanPick(true);
       let findCards = await findCard(event);
       setleftCard((e) => {
@@ -521,6 +529,7 @@ export default function Home() {
           .sort((a, b) => a.number - b.number);
       });
       pickCard(findCards);
+      if (onlyTargetPick) setonlyTargetPick(false);
     }
   }, 200);
 
@@ -549,11 +558,45 @@ export default function Home() {
     }
   };
 
+
+  useEffect(() => {
+    if((deadWood.point <= 10 || deadWoodotherPlayer.point <= 10) && startGame){
+      setendGame(true)
+      setTimeout(() => {
+        getCard();
+        setendGame(false)
+        setstartGame(false)
+        GimRummyStart();
+      }, 3000);
+    }else{
+      setendGame(false)
+    }
+  }, [deadWood, deadWoodotherPlayer])
+
   return (
     <div className="flex h-screen overflow-hidden bg-[url(https://www.gin-rummy-online.com/game/assets/images/backgrounds/1920x1200/green_felt.jpg)]">
       
-       <audio id="cardDropSound" src="/card-sounds-35956.mp3" preload="auto" />
+      <audio id="cardDropSound" src="/card-sounds-35956.mp3" preload="auto" />
       <audio id="distributeCardSound" src="/riffle-card-shuffle-104313.mp3" preload="auto" />
+
+     {endGame && <div className="fixed top-0 left-0 h-screen w-screen flex justify-center items-center bg-black bg-opacity-80 text-white z-[100]">
+        <div className="text-4xl mr-10 flex flex-col items-center">
+          <span>You</span>
+          <span>{deadWood.point}</span>
+        </div>
+        <div className="text-4xl flex flex-col items-center">
+          <span className="text-sm">VS</span>
+          <span>-</span>
+          </div>
+        <div className="text-4xl ml-10 flex flex-col items-center">
+          <span>Charlie</span>
+          <span>{deadWoodotherPlayer.point} </span>
+        </div>
+        <div className="text-4xl ml-10 flex flex-col items-center">
+          <span></span>
+          <span> =  {Math.abs(deadWoodotherPlayer.point - deadWood.point)}</span>
+        </div>
+      </div>}
 
       {!startGame && (
         <div className="bg-black bg-opacity-70 w-screen h-screen fixed top-0 left-0 z-[10000]">
@@ -576,17 +619,22 @@ export default function Home() {
       />
 
       <div className="flex flex-col h-dvh items-center justify-around p-1.5 w-[80%]">
+        <div className="flex justify-around w-full items-center">
+        <button className="px-5 py-3 bg-red-300 rounded-md" onClick={pickTimeout}>Other pick</button>
         <div
           className="flex justify-center items-start h-40"
           id="otherUserCard"
         ></div>
+        <button className="px-5 py-3 bg-red-300 rounded-md" onClick={dropTimeout}>Other drop</button>
+
+        </div>
 
         <div className="flex justify-between md:justify-around w-full md:w-2/3 px-0 md:m-2 py-3">
           <div></div>
           {endGame ? (
             <div className="deadwood bg-black bg-opacity-40 p-2 rounded-md">
               <h1 className="text-white text-center capitalize font-semibold text-xs md:text-md pb-1.5">
-                Deadwood ({deadWoodotherPlayer.point})
+                Deadwood ({deadWoodotherPlayer?.point})
               </h1>
             </div>
           ) : (
@@ -597,7 +645,7 @@ export default function Home() {
                   className="w-10 h-10 md:w-16 md:h-16"
                 />
                 <span className="text-sm text-white font-bold py-2">
-                  Charlie (20)
+                  Charlie ({deadWoodotherPlayer?.point})
                 </span>
               </div>
             </div>
@@ -666,7 +714,7 @@ export default function Home() {
           </div>
 
           <div
-            className="h-36 md:h-60 w-full flex justify-center items-center relative pickCardHighLight"
+            className={`h-36 md:h-60 w-full flex justify-center items-center relative ${ onlyTargetPick ? 'pickCardHighLight' : ''}`}
             id="target"
           ></div>
         </div>
