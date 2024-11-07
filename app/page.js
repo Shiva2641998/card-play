@@ -30,17 +30,17 @@ export default function Home() {
   });
   const gameStart = useRef(false);
   const [startGame, setstartGame] = useState(false);
-
-  const [myChance, setmyChance] = useState(true);
-  const [canPick, setCanPick] = useState(false);
-  const [endGame, setendGame] = useState(false);
-  const [onlyTargetPick, setonlyTargetPick] = useState(true);
+  const [otherUserCanPick, setotherUserCanPick] = useState(false);
 
   const CardDropSoundRef = useRef();
   const DistributeCard = useRef();
+  const canPick = useRef(false);
+  const onlyTargetPick = useRef(true);
+  const myChance = useRef(true);
+  const endGame = useRef(false);
 
   useEffect(() => {
-    if (!myChance && !endGame) {
+    if (!myChance.current && !endGame.current) {
       setTimeout(() => {
         document.getElementById("otherPick").click();
       }, 1500);
@@ -48,11 +48,11 @@ export default function Home() {
         document.getElementById("otherDrop").click();
       }, 3000);
     }
-  }, [myChance]);
+  }, [otherUserCanPick]);
 
   const pickTimeout = () => {
     // Simulate picking a card
-    if (!myChance && !endGame) {
+    if (!myChance.current && !endGame.current) {
       let pc = getRandomItems(leftCard, 1)?.[0];
       setleftCard((prevCards) => {
         return prevCards.filter((card) => card.id !== pc.id);
@@ -66,7 +66,7 @@ export default function Home() {
   };
 
   const dropTimeout = () => {
-    if (!myChance && !endGame) {
+    if (!myChance.current && !endGame.current) {
       let dc = getRandomItems(otherPlayer, 1)?.[0];
       // let d = otherPlayer.filter((card) => card.id !== dc.id);
       // setotherPlayer(d);
@@ -126,8 +126,13 @@ export default function Home() {
       targetCard: getOneCard,
     };
     // setallCard(leftallCards)
-    settargetCard(getOneCard)
+    settargetCard(getOneCard);
     setleftCard(leftallCards);
+    document.getElementById("startGame").innerHTML = "";
+    fistAllCardRender.current.leftCard.map((e) => leftCardUI(e));
+    fistAllCardRender.current.targetCard.map((e) => targetCardUI(e));
+    fistAllCardRender.current.mePlayer.map((e) => meCardUI(e));
+    fistAllCardRender.current.otherPlayer.map((e) => otherCardUI(e));
   }
 
   useLayoutEffect(() => {
@@ -191,7 +196,6 @@ export default function Home() {
 
     // Append all `.targetCard` elements to `containerB`
     const targetCards = document.querySelector(".targetCard");
-    console.log("targetCards", targetCards, fistAllCardRender);
     // cards.forEach((card) => {
     let id = targetCards.getAttribute("id");
     const findCards = await findCard(id);
@@ -205,7 +209,6 @@ export default function Home() {
         // rotateY: 360,
         stagger: 0.1,
         onStart: () => {
-          console.log(targetCards, " targetCards");
           // targetCards.querySelector("img").setAttribute("src", findCards.url);
           targetCards.style.backgroundImage = `url(${findCards.url})`;
           gameStart.current = true;
@@ -303,8 +306,6 @@ export default function Home() {
   };
 
   const dropOtherCard = async (event) => {
-    console.log("event:::", event, "mmmm");
-
     const containerB = document.getElementById("target");
     // Get the state of elements, but only if they exist in the DOM
     const state = Flip.getState(`#card-${event.id}`);
@@ -324,13 +325,13 @@ export default function Home() {
         cards.classList.remove("card");
         // cards.querySelector("img").setAttribute("src", event.url);
         cards.style.backgroundImage = `url(${event.url})`;
-        setmyChance(true);
+        myChance.current = true;
       },
     });
   };
 
   const dropCard = (id) => {
-    if(endGame) return
+    if (endGame.current) return;
     const containerB = document.getElementById("target");
     // Get the state of elements, but only if they exist in the DOM
     const state = Flip.getState(`#${id}`);
@@ -350,11 +351,12 @@ export default function Home() {
           CardDropSoundRefplayAudio();
         },
         onComplete: () => {
+          setotherUserCanPick((e) => !e);
+          myChance.current = false;
           cards.classList.remove("mycard");
           cards.classList.remove("card");
           cards.classList.add("targetCard");
-          setCanPick(false);
-          setmyChance(false);
+          canPick.current = false;
         },
       });
     }
@@ -369,7 +371,7 @@ export default function Home() {
   }
 
   const pickCard = (event) => {
-    if(endGame) return
+    if (endGame.current) return;
     const containerB = document.getElementById("myUserCard");
     // Get the state of elements, but only if they exist in the DOM
     const state = Flip.getState(`#card-${event.id}`);
@@ -412,21 +414,43 @@ export default function Home() {
     }
   };
 
+  function checkDifferences(arr) {
+    // Loop through the array and compare consecutive elements
+    for (let i = 1; i < arr.length; i++) {
+      if (Math.abs(arr[i] - arr[i - 1]) !== 1) {
+        console.log(arr, "not");
+        return false; // Return false if any difference is not 1
+      }
+    }
+    console.log(arr);
+    return true; // Return true if all differences are 1
+  }
+
   function hasThreeOccurrencesOfThree(arr, findNum) {
     // Count the number of occurrences of 3 in the array
-    const count = arr.filter((num) => num.number === findNum).length;
+    const countCardId = [
+      ...new Set(
+        arr
+          .filter((num) => num.cardId === findNum.cardId)
+          .map((e) => e.number)
+          .filter((e) => e >= findNum.number)
+      ),
+    ];
+    // console.log(countCardId, "countCardId");
+    let mel = countCardId?.length == 3 ? checkDifferences(countCardId) : countCardId?.length > 3 ? checkDifferences(countCardId) ? true : checkDifferences(countCardId.slice(0, 3)) : false;
+
+    const count = arr.filter((num) => num.number === findNum.number).length;
 
     // Check if the count is exactly 3
-    return count >= 3;
+    return mel ? mel : count >= 3;
   }
 
   const meldsCardFound = useMemo(() => {
     // let point = mePlayer;
     let mc = [...mePlayer]
-      .map((e) => (hasThreeOccurrencesOfThree(mePlayer, e.number) ? e : false))
+      .map((e) => (hasThreeOccurrencesOfThree(mePlayer, e) ? e : false))
       .filter((d) => d);
 
-    console.log("mieldCard -", mc);
     return mc;
     // return { point, card: mePlayer };
   }, [mePlayer]);
@@ -441,11 +465,9 @@ export default function Home() {
     if (meldsCard?.length > 0) {
       let shuffled = [...array];
       let newArr = [];
-      console.log(shuffled, "shuffled.length", meldsCard);
       let cardIds = meldsCard?.map((e) => `card-${e.id}`);
       var randomColor = getRandomColor();
       for (let i = 0; i < shuffled.length; i++) {
-        console.log("cardIds", cardIds);
         if (cardIds.includes(shuffled[i].id)) {
           newArr.unshift(shuffled[i]);
           shuffled[i].classList.add("mieldCard");
@@ -475,7 +497,6 @@ export default function Home() {
     // Shuffle the card order
     // Get the card elements into an array and shuffle them
     const cards = Array.from(container.children);
-    console.log("cards", cards);
     const shuffledCards = shuffleArray(
       cards.filter((e) => !e.className.includes("mieldCard")),
       meld
@@ -502,7 +523,6 @@ export default function Home() {
     let newCard = mePlayer.filter((e) =>
       filterIds?.length > 0 ? !filterIds.includes(e.id) : e
     );
-    console.log(newCard, "meldsCardFound", meldsCardFound, mePlayer);
     let point = newCard.reduce((prev, total) => {
       return (prev += total.number);
     }, 0);
@@ -521,12 +541,11 @@ export default function Home() {
   }, [mePlayer]);
 
   const cardClick = debounce(async (event) => {
-    if (!myChance) return;
+    if (!myChance.current) return;
 
     let list = event.target.classList.value;
-    console.log(list, "list");
     if (list.includes("mycard")) {
-      if (!canPick) return;
+      if (!canPick.current) return;
       let id = event.target.id;
       let findCards = await findCard(event);
       setmePlayer((e) => {
@@ -534,9 +553,9 @@ export default function Home() {
       });
       dropCard(id);
     } else if (list.includes("leftCard")) {
-      if (canPick) return;
-      if (onlyTargetPick) return;
-      setCanPick(true);
+      if (canPick.current) return;
+      if (onlyTargetPick.current) return;
+      canPick.current = true;
       let findCards = await findCard(event);
       setleftCard((e) => {
         return e.filter((e) => e.id != findCards.id);
@@ -548,8 +567,8 @@ export default function Home() {
       });
       pickCard(findCards);
     } else if (list.includes("target")) {
-      if (canPick) return;
-      setCanPick(true);
+      if (canPick.current) return;
+      canPick.current = true;
       let findCards = await findCard(event);
       setleftCard((e) => {
         return e.filter((e) => e.id != findCards.id);
@@ -560,7 +579,7 @@ export default function Home() {
           .sort((a, b) => a.number - b.number);
       });
       pickCard(findCards);
-      if (onlyTargetPick) setonlyTargetPick(false);
+      if (onlyTargetPick.current) onlyTargetPick.current = false;
     }
   }, 200);
 
@@ -613,7 +632,10 @@ export default function Home() {
         onComplete: () => {
           DistributeCardstopAudio();
           getCard();
-          setendGame(false);
+          endGame.current = false;
+          myChance.current = true;
+          canPick.current = false;
+          onlyTargetPick.current = true;
           setstartGame(false);
           setTimeout(() => {
             GimRummyStart();
@@ -646,10 +668,9 @@ export default function Home() {
         // rotateY: 360,
         // stagger: 0.1,
         onStart: () => {
-          console.log(targetCards, " targetCards");
           targetCards.forEach((card) => {
             card.style.backgroundImage = `url(${cardBackImage})`;
-            card.classList.remove("targetCards")
+            card.classList.remove("targetCards");
             card.classList.add("leftCard");
           });
           // targetCards.querySelector("img").setAttribute("src", findCards.url);
@@ -703,7 +724,6 @@ export default function Home() {
           statemycard.targets.map((card) => {
             // card.querySelector("img").setAttribute("src", findCardInfo.url);
             card.style.backgroundImage = `url(${cardBackImage})`;
-   
           });
         },
       });
@@ -737,13 +757,9 @@ export default function Home() {
   };
 
   const startAgain = () => {
-    setendGame(true);
+    endGame.current = true;
     setTimeout(() => {
       GimRummyReverseCard();
-      // getCard();
-      // setendGame(false)
-      // setstartGame(false)
-      // GimRummyStart();
     }, 3000);
   };
 
@@ -754,9 +770,73 @@ export default function Home() {
     ) {
       startAgain();
     } else {
-      setendGame(false);
+      endGame.current = false;
     }
   }, [deadWood, deadWoodotherPlayer]);
+
+  const leftCardUI = (e) => {
+    const cardElement = document.createElement("div");
+
+    cardElement.id = `card-${e.id}`;
+
+    cardElement.className =
+      "leftCard w-14 h-24 md:w-32 md:h-44 z-10 bg-no-repeat bg-contain bg-center overflow-hidden";
+    cardElement.style.backgroundImage = `url(${cardBackImage})`;
+
+    cardElement.setAttribute("data-page", e.number);
+
+    cardElement.addEventListener("click", (event) => cardClick(event));
+
+    document.getElementById("startGame").appendChild(cardElement);
+  };
+
+  const targetCardUI = (e) => {
+    const cardElement = document.createElement("div");
+
+    cardElement.id = `card-${e.id}`;
+
+    cardElement.className =
+      "targetCard w-14 h-24 md:w-32 md:h-44 z-10 bg-no-repeat bg-contain bg-center overflow-hidden";
+    cardElement.style.backgroundImage = `url(${cardBackImage})`;
+
+    cardElement.setAttribute("data-page", e.number);
+
+    cardElement.addEventListener("click", (event) => cardClick(event));
+
+    document.getElementById("startGame").appendChild(cardElement);
+  };
+
+  const meCardUI = (e) => {
+    const cardElement = document.createElement("div");
+
+    cardElement.id = `card-${e.id}`;
+
+    cardElement.className =
+      "mycard w-14 h-24 md:w-32 md:h-44 z-10 bg-no-repeat bg-contain bg-center overflow-hidden";
+    cardElement.style.backgroundImage = `url(${cardBackImage})`;
+
+    cardElement.setAttribute("data-page", e.number);
+
+    cardElement.addEventListener("click", (event) => cardClick(event));
+
+    document.getElementById("startGame").appendChild(cardElement);
+  };
+
+  const otherCardUI = (e) => {
+    const cardElement = document.createElement("div");
+
+    cardElement.id = `card-${e.id}`;
+
+    cardElement.className =
+      "card w-14 h-24 md:w-32 md:h-44 z-10 bg-no-repeat bg-contain bg-center overflow-hidden";
+    cardElement.style.backgroundImage = `url(${cardBackImage})`;
+
+    cardElement.setAttribute("data-page", e.number);
+
+    cardElement.addEventListener("click", (event) => cardClick(event));
+
+    document.getElementById("startGame").appendChild(cardElement);
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-[url(https://www.gin-rummy-online.com/game/assets/images/backgrounds/1920x1200/green_felt.jpg)]">
@@ -768,7 +848,7 @@ export default function Home() {
         preload="auto"
       />
 
-      {endGame && (
+      {endGame.current && (
         <div className="fixed top-0 left-0 h-screen w-screen flex justify-center items-center bg-black bg-opacity-80 text-white z-[100]">
           <div className="text-4xl mr-10 flex flex-col items-center">
             <span>You</span>
@@ -828,7 +908,7 @@ export default function Home() {
 
         <div className="flex justify-between md:justify-around w-full md:w-2/3 px-0 md:m-2 py-3">
           <div></div>
-          {endGame ? (
+          {endGame.current ? (
             <div className="deadwood bg-black bg-opacity-40 p-2 rounded-md">
               <h1 className="text-white text-center capitalize font-semibold text-xs md:text-md pb-1.5">
                 Deadwood ({deadWoodotherPlayer?.point})
@@ -861,7 +941,7 @@ export default function Home() {
             className={`h-20 flex justify-center relative centerDiv w-96 md:w-80 transition-all`}
             id="startGame"
           >
-            {leftCard?.length > 0 && 
+            {/* {leftCard?.length > 0 && 
               fistAllCardRender.current.leftCard.map((e, i) => (
                 <div
                   id={`card-${e.id}`}
@@ -907,19 +987,19 @@ export default function Home() {
                   className="card w-14 h-24 md:w-32 md:h-44 z-10 bg-no-repeat bg-contain bg-center overflow-hidden"
                   style={{ backgroundImage: `url(${cardBackImage})` }}
                 ></div>
-              ))}
+              ))} */}
           </div>
 
           <div
             className={`h-36 md:h-60 w-full flex justify-center items-center relative ${
-              onlyTargetPick ? "pickCardHighLight" : ""
+              onlyTargetPick.current ? "pickCardHighLight" : ""
             }`}
             id="target"
           ></div>
         </div>
 
         <div className="flex justify-between md:justify-around w-full md:w-2/3 px-0 py-10 md:m-2 ">
-          {endGame ? (
+          {endGame.current ? (
             <div className="mield bg-black bg-opacity-40 p-2 rounded-md relative">
               <h1 className="text-white text-center capitalize font-semibold text-xs md:text-md pb-1.5">
                 Mield
