@@ -27,6 +27,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <Head>
         {/* Include the Google Ads script in the Head for proper placement */}
+        <meta name="google-adsense-account" content="ca-pub-7147387469181788" />
         <script
           async
           src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7147387469181788`}
