@@ -2,6 +2,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 // import AdSense from "@/components/Ads/AdSense";
 import Script from "next/script";
+import Head from "next/head";
 
 // -H 192.168.29.129
 
@@ -24,14 +25,22 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <Script
+      <Head>
+        {/* Include the Google Ads script in the Head for proper placement */}
+        <script
           async
           src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7147387469181788`}
           crossOrigin="anonymous"
-        ></Script>
+        ></script>
+      </Head>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        {/* <Script
+          async
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7147387469181788`}
+          crossOrigin="anonymous"
+        ></Script> */}
         {children}
       </body>
     </html>
