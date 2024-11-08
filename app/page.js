@@ -900,7 +900,6 @@ console.log("mcsc ", mcsc)
 
   return (
     <div className="flex h-screen overflow-hidden bg-[url(https://www.gin-rummy-online.com/game/assets/images/backgrounds/1920x1200/green_felt.jpg)]">
-      <button onClick={startAgain}>start Again</button>
       <audio id="cardDropSound" src="/card-sounds-35956.mp3" preload="auto" />
       <audio
         id="distributeCardSound"
