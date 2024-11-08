@@ -43,10 +43,10 @@ export default function Home() {
     if (!myChance.current && !endGame.current) {
       setTimeout(() => {
         document.getElementById("otherPick").click();
-      }, 1500);
+      }, 1000);
       setTimeout(() => {
         document.getElementById("otherDrop").click();
-      }, 3000);
+      }, 2000);
     }
   }, [otherUserCanPick]);
 
@@ -416,46 +416,93 @@ export default function Home() {
 
   function checkDifferences(arr) {
     // Loop through the array and compare consecutive elements
-    for (let i = 1; i < arr.length; i++) {
-      if (Math.abs(arr[i] - arr[i - 1]) !== 1) {
-        console.log(arr, "not");
-        return false; // Return false if any difference is not 1
+    // let isCard = []
+    // for (let i = 1; i < arr.length; i++) {
+    //   if (Math.abs(arr[i]?.number - arr[i - 1]?.number) == 1){
+    //     isCard.push(arr[i - 1])
+    //     if(i == (arr.length - 1)){
+    //       isCard.push(arr[i])
+    //     }
+    //   }
+    // }
+    // console.log("isCard :: ",isCard);
+    // return isCard?.length >= 3 ? isCard : false;
+    
+    let consecutiveSet = [];
+    let result = [];
+  
+    // Iterate through the sorted array and find consecutive sets
+    for (let i = 0; i < arr.length; i++) {
+      if (i === 0 || arr[i].number - arr[i - 1].number === 1) {
+        consecutiveSet.push(arr[i]);
+      } else {
+        // If the consecutive set breaks, check if we have 3 or more elements
+        if (consecutiveSet.length >= 3) {
+          result.push(...consecutiveSet); // Collect the consecutive elements
+        }
+        // Reset for new set
+        consecutiveSet = [arr[i]];
       }
     }
-    console.log(arr);
-    return true; // Return true if all differences are 1
+  
+    // Check the last consecutive set
+    if (consecutiveSet.length >= 3) {
+      result.push(...consecutiveSet);
+    }
+  
+    // Return the collected elements (minimum 3 consecutive with a difference of 1)
+    return result;
+    
+    // Return true if all differences are 1
+  }
+
+  function hasThreeOccurrencesOfThreeWithSameAnother(arr, findNum) {
+    // Count the number of occurrences of 3 in the array
+    let mieldCard = [];
+
+    for (let index = 1; index <= 4; index++) {
+      const element = arr.filter((num) => num.cardId === index);
+      console.log(element, "element");
+    
+      let isAvailableCard = element?.length >= 3; // Ensure at least 3 elements are there
+      let collectedElements = isAvailableCard ? checkDifferences(element) : [];
+    
+      if (collectedElements.length > 0) {
+        console.log("Collected Elements: ", collectedElements);
+        mieldCard.push(...collectedElements); // Push the valid elements into mieldCard
+      }
+    }
+
+    // Check if the count is exactly 3
+    return  mieldCard?.length > 0 ? mieldCard.reverse() : [];
   }
 
   function hasThreeOccurrencesOfThree(arr, findNum) {
-    // Count the number of occurrences of 3 in the array
-    const countCardId = [
-      ...new Set(
-        arr
-          .filter((num) => num.cardId === findNum.cardId)
-          .map((e) => e.number)
-          .filter((e) => e >= findNum.number)
-      ),
-    ];
-    // console.log(countCardId, "countCardId");
-    let mel = countCardId?.length == 3 ? checkDifferences(countCardId) : countCardId?.length > 3 ? checkDifferences(countCardId) ? true : checkDifferences(countCardId.slice(0, 3)) : false;
+    // // Count the number of occurrences of 3 in the array
 
     const count = arr.filter((num) => num.number === findNum.number).length;
 
     // Check if the count is exactly 3
-    return mel ? mel : count >= 3;
+    return count >= 3;
   }
 
   const meldsCardFound = useMemo(() => {
     // let point = mePlayer;
+
+    let mcsc =  hasThreeOccurrencesOfThreeWithSameAnother(mePlayer);
+console.log("mcsc ", mcsc)
+    let filterIds = mcsc?.length > 0 ?  mcsc?.map((e) => e.id) : [];
+
     let mc = [...mePlayer]
-      .map((e) => (hasThreeOccurrencesOfThree(mePlayer, e) ? e : false))
+      .map((e) => (hasThreeOccurrencesOfThree(mePlayer.filter((e) => !filterIds?.includes(e.id)), e) ? e : false))
       .filter((d) => d);
 
-    return mc;
+    return mcsc?.length > 0 ? [...mcsc,...mc] : mc;
     // return { point, card: mePlayer };
   }, [mePlayer]);
 
   useEffect(() => {
+    console.log("meldsCardFound  ", meldsCardFound)
     if (meldsCardFound?.length > 0) {
       shuffleCards(meldsCardFound);
     }
@@ -464,15 +511,21 @@ export default function Home() {
   const shuffleArray = (array, meldsCard) => {
     if (meldsCard?.length > 0) {
       let shuffled = [...array];
+
+      let MeldnewArr = [];
       let newArr = [];
       let cardIds = meldsCard?.map((e) => `card-${e.id}`);
       var randomColor = getRandomColor();
       for (let i = 0; i < shuffled.length; i++) {
         if (cardIds.includes(shuffled[i].id)) {
-          newArr.unshift(shuffled[i]);
-          shuffled[i].classList.add("mieldCard");
-          shuffled[i].style.setProperty("--random-color", randomColor);
-          shuffled[i].classList.remove("mycard");
+          if(!shuffled[i].classList.contains("mieldCard")){
+            MeldnewArr.unshift(shuffled[i]);
+            shuffled[i].classList.add("mieldCard");
+            shuffled[i].style.setProperty("--random-color", randomColor);
+            shuffled[i].classList.remove("mycard");
+          }else{
+            MeldnewArr.push(shuffled[i]);
+          }
         } else {
           shuffled[i].classList?.remove("mieldCard");
           shuffled[i].classList?.add("mycard");
@@ -482,7 +535,15 @@ export default function Home() {
         // const j = Math.floor(Math.random() * (i + 1));
         // [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
       }
-      return newArr;
+
+      MeldnewArr.sort((a, b) => {
+        // Extract numeric part from id (assuming format 'card-<number>')
+        const cardIdA = parseInt(a.id.split('-')[1]);
+        const cardIdB = parseInt(b.id.split('-')[1]);
+        return cardIdA - cardIdB; // Ascending order
+      });
+
+      return [...MeldnewArr, ...newArr];
     } else {
       return [];
     }
@@ -498,14 +559,13 @@ export default function Home() {
     // Get the card elements into an array and shuffle them
     const cards = Array.from(container.children);
     const shuffledCards = shuffleArray(
-      cards.filter((e) => !e.className.includes("mieldCard")),
+      cards,
       meld
     );
 
     // Clear the container and re-append the shuffled elements
     container.innerHTML = ""; // Clear the container
     [
-      ...cards.filter((e) => e.className.includes("mieldCard")),
       ...shuffledCards,
     ].forEach((card) => container.appendChild(card)); // Append shuffled cards
 
