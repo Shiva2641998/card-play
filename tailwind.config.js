@@ -7,6 +7,15 @@ module.exports = {
   ],
   theme: {
     extend: {
+      keyframes: {
+        scaleDown: {
+          '0%': { transform: 'scale(1.5)' },
+          '100%': { transform: 'scale(0.8)' },
+        },
+      },
+      animation: {
+        scaleDown: 'scaleDown 0.5s ease-out forwards',
+      },
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",

@@ -13,6 +13,8 @@ import gsap from "gsap";
 import { card } from "@/components/constants/card";
 import AdBanner from "@/components/Ads/AdBanner";
 import { debounce, getRandomColor } from "@/components/constants";
+import useWindowSize from 'react-use/lib/useWindowSize'
+import Confetti from 'react-confetti'
 
 const cardBackImage =
   "https://www.gin-rummy-online.com/game/assets/images/backs/146x198/rhombus_blue.png";
@@ -32,12 +34,17 @@ export default function Home() {
   const [startGame, setstartGame] = useState(false);
   const [otherUserCanPick, setotherUserCanPick] = useState(false);
 
+  const [myWinningPoint, setmyWinningPoint] = useState(0)
+  const [otherWinningPoint, setotherWinningPoint] = useState(0)
+
   const CardDropSoundRef = useRef();
   const DistributeCard = useRef();
   const canPick = useRef(false);
   const onlyTargetPick = useRef(true);
   const myChance = useRef(true);
   const endGame = useRef(false);
+
+  const { width, height } = useWindowSize()
 
   useEffect(() => {
     if (!myChance.current && !endGame.current) {
@@ -691,6 +698,7 @@ console.log("mcsc ", mcsc)
         stagger: 0.1,
         onComplete: () => {
           DistributeCardstopAudio();
+          if(endGame.current){
           getCard();
           endGame.current = false;
           myChance.current = true;
@@ -700,6 +708,7 @@ console.log("mcsc ", mcsc)
           setTimeout(() => {
             GimRummyStart();
           }, 1000);
+        }
         },
       });
     }
@@ -822,17 +831,31 @@ console.log("mcsc ", mcsc)
       GimRummyReverseCard();
     }, 3000);
   };
-
+console.log("diff===", myWinningPoint, otherWinningPoint)
   useEffect(() => {
     if (
       (deadWood.point <= 10 || deadWoodotherPlayer.point <= 10) &&
       startGame
     ) {
-      startAgain();
+      let diff = Math.abs(deadWoodotherPlayer.point - deadWood.point);
+      console.log("diff ",diff, deadWoodotherPlayer.point , deadWood.point)
+      if(deadWoodotherPlayer.point > deadWood.point){
+        setmyWinningPoint((p) => p + diff)
+      }else if(deadWoodotherPlayer.point < deadWood.point){
+        setotherWinningPoint((p) => p + diff)
+      }
+      startAgain()
     } else {
       endGame.current = false;
     }
   }, [deadWood, deadWoodotherPlayer]);
+
+  useEffect(() => {
+    if(myWinningPoint >= 100){
+      endGame.current = true;
+    }
+  }, [myWinningPoint])
+  
 
   const leftCardUI = (e) => {
     const cardElement = document.createElement("div");
@@ -907,11 +930,18 @@ console.log("mcsc ", mcsc)
         preload="auto"
       />
 
+      {myWinningPoint >= 100 && <><Confetti
+        width={width}
+        height={height}
+      />
+      <div className="fixed top-0 left-0 h-screen w-screen bg-contain transform scale-150 animate-scaleDown z-[10000] bg-[url(https://png.pngtree.com/png-vector/20220402/ourmid/pngtree-you-win-red-rubber-stamp-on-white-raffle-ambition-grand-vector-png-image_21881178.png)]">
+      </div> </> }
+
       {endGame.current && (
         <div className="fixed top-0 left-0 h-screen w-screen flex justify-center items-center bg-black bg-opacity-80 text-white z-[100]">
           <div className="text-4xl mr-10 flex flex-col items-center">
             <span>You</span>
-            <span>{deadWood.point}</span>
+            <span>{myWinningPoint}</span>
           </div>
           <div className="text-4xl flex flex-col items-center">
             <span className="text-sm">VS</span>
@@ -919,7 +949,7 @@ console.log("mcsc ", mcsc)
           </div>
           <div className="text-4xl ml-10 flex flex-col items-center">
             <span>Charlie</span>
-            <span>{deadWoodotherPlayer.point} </span>
+            <span>{otherWinningPoint} </span>
           </div>
           <div className="text-4xl ml-10 flex flex-col items-center">
             <span></span>
@@ -981,7 +1011,7 @@ console.log("mcsc ", mcsc)
                   className="w-10 h-10 md:w-16 md:h-16"
                 />
                 <span className="text-sm text-white font-bold py-2">
-                  Charlie ({deadWoodotherPlayer?.point})
+                  Charlie ({otherWinningPoint})
                 </span>
               </div>
             </div>
@@ -1079,7 +1109,7 @@ console.log("mcsc ", mcsc)
                 className="w-16 h-14"
               />
               <span className="text-sm text-white font-bold py-2">
-                You (20)
+                You ({myWinningPoint})
               </span>
             </div>
           )}
