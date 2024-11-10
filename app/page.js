@@ -14,7 +14,6 @@ import { card } from "@/components/constants/card";
 import AdBanner from "@/components/Ads/AdBanner";
 import { debounce, getRandomColor } from "@/components/constants";
 import useWindowSize from "react-use/lib/useWindowSize";
-import Confetti from "react-confetti";
 
 const cardBackImage =
   "https://www.gin-rummy-online.com/game/assets/images/backs/146x198/rhombus_blue.png";
@@ -977,7 +976,6 @@ export default function Home() {
 
       {myWinningPoint >= 100 && (
         <>
-          <Confetti width={width} height={height} />
           <div className="fixed top-0 left-0 h-screen w-screen bg-contain transform scale-150 animate-scaleDown z-[10000] bg-[url(https://png.pngtree.com/png-vector/20220402/ourmid/pngtree-you-win-red-rubber-stamp-on-white-raffle-ambition-grand-vector-png-image_21881178.png)]"></div>{" "}
         </>
       )}
