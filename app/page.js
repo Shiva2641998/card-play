@@ -13,8 +13,8 @@ import gsap from "gsap";
 import { card } from "@/components/constants/card";
 import AdBanner from "@/components/Ads/AdBanner";
 import { debounce, getRandomColor } from "@/components/constants";
-import useWindowSize from 'react-use/lib/useWindowSize'
-import Confetti from 'react-confetti'
+import useWindowSize from "react-use/lib/useWindowSize";
+import Confetti from "react-confetti";
 
 const cardBackImage =
   "https://www.gin-rummy-online.com/game/assets/images/backs/146x198/rhombus_blue.png";
@@ -34,8 +34,8 @@ export default function Home() {
   const [startGame, setstartGame] = useState(false);
   const [otherUserCanPick, setotherUserCanPick] = useState(false);
 
-  const [myWinningPoint, setmyWinningPoint] = useState(0)
-  const [otherWinningPoint, setotherWinningPoint] = useState(0)
+  const [myWinningPoint, setmyWinningPoint] = useState(0);
+  const [otherWinningPoint, setotherWinningPoint] = useState(0);
 
   const CardDropSoundRef = useRef();
   const DistributeCard = useRef();
@@ -43,8 +43,9 @@ export default function Home() {
   const onlyTargetPick = useRef(true);
   const myChance = useRef(true);
   const endGame = useRef(false);
+  const winnerFound = useRef(false);
 
-  const { width, height } = useWindowSize()
+  const { width, height } = useWindowSize();
 
   useEffect(() => {
     if (!myChance.current && !endGame.current) {
@@ -170,6 +171,7 @@ export default function Home() {
   const GimRummyStart = async () => {
     // DistributeCardplayAudio();
     // other Player Card
+    if (endGame.current || winnerFound.current) return;
     const otherUserCardDiv = document.getElementById("otherUserCard");
     // Get the state of elements, but only if they exist in the DOM
     const otherUserCardstate = document.querySelectorAll(".card").length
@@ -287,6 +289,7 @@ export default function Home() {
   }
 
   const pickOtherCard = (event) => {
+    if (endGame.current || winnerFound.current) return;
     const containerB = document.getElementById("otherUserCard");
     // Get the state of elements, but only if they exist in the DOM
     const state = Flip.getState(`#card-${event.id}`);
@@ -313,6 +316,7 @@ export default function Home() {
   };
 
   const dropOtherCard = async (event) => {
+    if (endGame.current || winnerFound.current) return;
     const containerB = document.getElementById("target");
     // Get the state of elements, but only if they exist in the DOM
     const state = Flip.getState(`#card-${event.id}`);
@@ -434,10 +438,10 @@ export default function Home() {
     // }
     // console.log("isCard :: ",isCard);
     // return isCard?.length >= 3 ? isCard : false;
-    
+
     let consecutiveSet = [];
     let result = [];
-  
+
     // Iterate through the sorted array and find consecutive sets
     for (let i = 0; i < arr.length; i++) {
       if (i === 0 || arr[i].number - arr[i - 1].number === 1) {
@@ -451,15 +455,15 @@ export default function Home() {
         consecutiveSet = [arr[i]];
       }
     }
-  
+
     // Check the last consecutive set
     if (consecutiveSet.length >= 3) {
       result.push(...consecutiveSet);
     }
-  
+
     // Return the collected elements (minimum 3 consecutive with a difference of 1)
     return result;
-    
+
     // Return true if all differences are 1
   }
 
@@ -470,10 +474,10 @@ export default function Home() {
     for (let index = 1; index <= 4; index++) {
       const element = arr.filter((num) => num.cardId === index);
       console.log(element, "element");
-    
+
       let isAvailableCard = element?.length >= 3; // Ensure at least 3 elements are there
       let collectedElements = isAvailableCard ? checkDifferences(element) : [];
-    
+
       if (collectedElements.length > 0) {
         console.log("Collected Elements: ", collectedElements);
         mieldCard.push(...collectedElements); // Push the valid elements into mieldCard
@@ -481,7 +485,7 @@ export default function Home() {
     }
 
     // Check if the count is exactly 3
-    return  mieldCard?.length > 0 ? mieldCard.reverse() : [];
+    return mieldCard?.length > 0 ? mieldCard.reverse() : [];
   }
 
   function hasThreeOccurrencesOfThree(arr, findNum) {
@@ -496,20 +500,27 @@ export default function Home() {
   const meldsCardFound = useMemo(() => {
     // let point = mePlayer;
 
-    let mcsc =  hasThreeOccurrencesOfThreeWithSameAnother(mePlayer);
-console.log("mcsc ", mcsc)
-    let filterIds = mcsc?.length > 0 ?  mcsc?.map((e) => e.id) : [];
+    let mcsc = hasThreeOccurrencesOfThreeWithSameAnother(mePlayer);
+    console.log("mcsc ", mcsc);
+    let filterIds = mcsc?.length > 0 ? mcsc?.map((e) => e.id) : [];
 
     let mc = [...mePlayer]
-      .map((e) => (hasThreeOccurrencesOfThree(mePlayer.filter((e) => !filterIds?.includes(e.id)), e) ? e : false))
+      .map((e) =>
+        hasThreeOccurrencesOfThree(
+          mePlayer.filter((e) => !filterIds?.includes(e.id)),
+          e
+        )
+          ? e
+          : false
+      )
       .filter((d) => d);
 
-    return mcsc?.length > 0 ? [...mcsc,...mc] : mc;
+    return mcsc?.length > 0 ? [...mcsc, ...mc] : mc;
     // return { point, card: mePlayer };
   }, [mePlayer]);
 
   useEffect(() => {
-    console.log("meldsCardFound  ", meldsCardFound)
+    console.log("meldsCardFound  ", meldsCardFound);
     if (meldsCardFound?.length > 0) {
       shuffleCards(meldsCardFound);
     }
@@ -525,12 +536,12 @@ console.log("mcsc ", mcsc)
       var randomColor = getRandomColor();
       for (let i = 0; i < shuffled.length; i++) {
         if (cardIds.includes(shuffled[i].id)) {
-          if(!shuffled[i].classList.contains("mieldCard")){
+          if (!shuffled[i].classList.contains("mieldCard")) {
             MeldnewArr.unshift(shuffled[i]);
             shuffled[i].classList.add("mieldCard");
             shuffled[i].style.setProperty("--random-color", randomColor);
             shuffled[i].classList.remove("mycard");
-          }else{
+          } else {
             MeldnewArr.push(shuffled[i]);
           }
         } else {
@@ -545,8 +556,8 @@ console.log("mcsc ", mcsc)
 
       MeldnewArr.sort((a, b) => {
         // Extract numeric part from id (assuming format 'card-<number>')
-        const cardIdA = parseInt(a.id.split('-')[1]);
-        const cardIdB = parseInt(b.id.split('-')[1]);
+        const cardIdA = parseInt(a.id.split("-")[1]);
+        const cardIdB = parseInt(b.id.split("-")[1]);
         return cardIdA - cardIdB; // Ascending order
       });
 
@@ -565,16 +576,11 @@ console.log("mcsc ", mcsc)
     // Shuffle the card order
     // Get the card elements into an array and shuffle them
     const cards = Array.from(container.children);
-    const shuffledCards = shuffleArray(
-      cards,
-      meld
-    );
+    const shuffledCards = shuffleArray(cards, meld);
 
     // Clear the container and re-append the shuffled elements
     container.innerHTML = ""; // Clear the container
-    [
-      ...shuffledCards,
-    ].forEach((card) => container.appendChild(card)); // Append shuffled cards
+    [...shuffledCards].forEach((card) => container.appendChild(card)); // Append shuffled cards
 
     // Animate the shuffle transition
     Flip.from(state, {
@@ -608,7 +614,7 @@ console.log("mcsc ", mcsc)
   }, [mePlayer]);
 
   const cardClick = debounce(async (event) => {
-    if (!myChance.current) return;
+    if (!myChance.current || winnerFound.current) return;
 
     let list = event.target.classList.value;
     if (list.includes("mycard")) {
@@ -696,11 +702,12 @@ console.log("mcsc ", mcsc)
         ease: "power2.inOut",
         rotateY: 180,
         stagger: 0.1,
+        onStart: () => {
+          endGame.current = false;
+        },
         onComplete: () => {
           DistributeCardstopAudio();
-          if(endGame.current){
           getCard();
-          endGame.current = false;
           myChance.current = true;
           canPick.current = false;
           onlyTargetPick.current = true;
@@ -708,7 +715,6 @@ console.log("mcsc ", mcsc)
           setTimeout(() => {
             GimRummyStart();
           }, 1000);
-        }
         },
       });
     }
@@ -826,36 +832,47 @@ console.log("mcsc ", mcsc)
   };
 
   const startAgain = () => {
-    endGame.current = true;
+    // endGame.current = true;
     setTimeout(() => {
       GimRummyReverseCard();
     }, 3000);
   };
-console.log("diff===", myWinningPoint, otherWinningPoint)
+  console.log("diff===", myWinningPoint, otherWinningPoint);
   useEffect(() => {
     if (
       (deadWood.point <= 10 || deadWoodotherPlayer.point <= 10) &&
       startGame
     ) {
       let diff = Math.abs(deadWoodotherPlayer.point - deadWood.point);
-      console.log("diff ",diff, deadWoodotherPlayer.point , deadWood.point)
-      if(deadWoodotherPlayer.point > deadWood.point){
-        setmyWinningPoint((p) => p + diff)
-      }else if(deadWoodotherPlayer.point < deadWood.point){
-        setotherWinningPoint((p) => p + diff)
+      console.log("diff ", diff, deadWoodotherPlayer.point, deadWood.point);
+      if (deadWoodotherPlayer.point > deadWood.point) {
+        setmyWinningPoint((p) => p + diff);
+      } else if (deadWoodotherPlayer.point < deadWood.point) {
+        setotherWinningPoint((p) => p + diff);
       }
-      startAgain()
+      endGame.current = true;
+      endAminate();
+
+      setTimeout(() => {
+        tween1.reverse(); // This will play the animation backward
+        tween2.reverse(); // This will play the animation backward
+      }, 3000);
+      startAgain();
     } else {
       endGame.current = false;
     }
   }, [deadWood, deadWoodotherPlayer]);
 
   useEffect(() => {
-    if(myWinningPoint >= 100){
-      endGame.current = true;
+    if (myWinningPoint >= 100 || otherWinningPoint >= 100) {
+      endGame.current = false;
+      winnerFound.current = true;
     }
-  }, [myWinningPoint])
-  
+    // else if(endGame.current){
+    //   // endGame.current = true;
+    //   startAgain();
+    // }
+  }, [myWinningPoint]);
 
   const leftCardUI = (e) => {
     const cardElement = document.createElement("div");
@@ -921,6 +938,34 @@ console.log("diff===", myWinningPoint, otherWinningPoint)
     document.getElementById("startGame").appendChild(cardElement);
   };
 
+  var tween1;
+  var tween2;
+
+  const endAminate = () => {
+    let icon = document.querySelector(".otherUserIcon");
+    let myIcon = document.querySelector(".myUserIcon");
+    tween1 = gsap.to(icon, {
+      y: "20vh", // 30% of the viewport height
+      x: "-10vw",
+      duration: 2,
+      zIndex: 1000,
+      backgroundColor: "#bb2124",
+      padding: 8,
+      borderRadius: 10,
+      invalidateOnRefresh: true,
+    });
+    tween2 = gsap.to(myIcon, {
+      y: "-25vh", // 25% of the viewport height
+      x: "10vw",
+      duration: 2,
+      zIndex: 1000,
+      backgroundColor: "#d4af37",
+      padding: 10,
+      borderRadius: 10,
+      invalidateOnRefresh: true,
+    });
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-[url(https://www.gin-rummy-online.com/game/assets/images/backgrounds/1920x1200/green_felt.jpg)]">
       <audio id="cardDropSound" src="/card-sounds-35956.mp3" preload="auto" />
@@ -930,49 +975,11 @@ console.log("diff===", myWinningPoint, otherWinningPoint)
         preload="auto"
       />
 
-      {myWinningPoint >= 100 && <><Confetti
-        width={width}
-        height={height}
-      />
-      <div className="fixed top-0 left-0 h-screen w-screen bg-contain transform scale-150 animate-scaleDown z-[10000] bg-[url(https://png.pngtree.com/png-vector/20220402/ourmid/pngtree-you-win-red-rubber-stamp-on-white-raffle-ambition-grand-vector-png-image_21881178.png)]">
-      </div> </> }
-
-      {endGame.current && (
-        <div className="fixed top-0 left-0 h-screen w-screen flex justify-center items-center bg-black bg-opacity-80 text-white z-[100]">
-          <div className="text-4xl mr-10 flex flex-col items-center">
-            <span>You</span>
-            <span>{myWinningPoint}</span>
-          </div>
-          <div className="text-4xl flex flex-col items-center">
-            <span className="text-sm">VS</span>
-            <span>-</span>
-          </div>
-          <div className="text-4xl ml-10 flex flex-col items-center">
-            <span>Charlie</span>
-            <span>{otherWinningPoint} </span>
-          </div>
-          <div className="text-4xl ml-10 flex flex-col items-center">
-            <span></span>
-            <span>
-              {" "}
-              = {Math.abs(deadWoodotherPlayer.point - deadWood.point)}
-            </span>
-          </div>
-        </div>
-      )}
-
-      {!startGame && (
-        <div className="bg-black bg-opacity-70 w-screen h-screen fixed top-0 left-0 z-[10000]">
-          <div className="flex justify-center items-center h-screen flex-col">
-            <h1 className="text-2xl  font-bold text-white">
-              Game will start soon!!
-            </h1>
-            <img
-              src="https://www.cardgame.com/uploaded/game/screenshot/gin-rummy-classic.webp"
-              className="w-96 h-60 rounded-md mt-2"
-            />
-          </div>
-        </div>
+      {myWinningPoint >= 100 && (
+        <>
+          <Confetti width={width} height={height} />
+          <div className="fixed top-0 left-0 h-screen w-screen bg-contain transform scale-150 animate-scaleDown z-[10000] bg-[url(https://png.pngtree.com/png-vector/20220402/ourmid/pngtree-you-win-red-rubber-stamp-on-white-raffle-ambition-grand-vector-png-image_21881178.png)]"></div>{" "}
+        </>
       )}
 
       <AdBanner
@@ -997,28 +1004,24 @@ console.log("diff===", myWinningPoint, otherWinningPoint)
 
         <div className="flex justify-between md:justify-around w-full md:w-2/3 px-0 md:m-2 py-3">
           <div></div>
-          {endGame.current ? (
-            <div className="deadwood bg-black bg-opacity-40 p-2 rounded-md">
-              <h1 className="text-white text-center capitalize font-semibold text-xs md:text-md pb-1.5">
-                Deadwood ({deadWoodotherPlayer?.point})
-              </h1>
-            </div>
-          ) : (
-            <div className="w-full justify-end flex mr-20">
-              <div className="flex flex-col items-center justify-end ">
-                <img
-                  src="https://www.gin-rummy-online.com/game/assets/images/players/pn103.png"
-                  className="w-10 h-10 md:w-16 md:h-16"
-                />
-                <span className="text-sm text-white font-bold py-2">
-                  Charlie ({otherWinningPoint})
+          <div className="w-full justify-end flex mr-20">
+            <div className="flex flex-col items-center justify-end otherUserIcon">
+              <img
+                src="https://www.gin-rummy-online.com/game/assets/images/players/pn103.png"
+                className="w-10 h-10 md:w-16 md:h-16 "
+              />
+              <span className="text-sm text-white font-bold py-2">
+                Charlie ({otherWinningPoint})
+              </span>
+              {deadWoodotherPlayer.point <= 10 && (
+                <span>
+                  +{Math.abs(deadWoodotherPlayer.point - deadWood.point)}
                 </span>
-              </div>
+              )}
             </div>
-          )}
+          </div>
+          {/* )} */}
         </div>
-
-        {/* <button onClick={shuffleCards}>shffel</button> */}
 
         <div className="flex justify-between items-center w-full md:w-2/3 h-36 md:h-60">
           <div
@@ -1029,55 +1032,7 @@ console.log("diff===", myWinningPoint, otherWinningPoint)
           <div
             className={`h-20 flex justify-center relative centerDiv w-96 md:w-80 transition-all`}
             id="startGame"
-          >
-            {/* {leftCard?.length > 0 && 
-              fistAllCardRender.current.leftCard.map((e, i) => (
-                <div
-                  id={`card-${e.id}`}
-                  key={`card-${e.id}`}
-                  data-page={e.number}
-                  onClick={(e) => cardClick(e)}
-                  className="leftCard w-14 h-24 md:w-32 md:h-44 z-10 bg-no-repeat bg-contain bg-center overflow-hidden"
-                  style={{ backgroundImage: `url(${cardBackImage})` }}
-                ></div>
-              ))}
-
-            {targetCard?.length > 0 &&
-              fistAllCardRender.current.targetCard.map((e, i) => (
-                <div
-                  id={`card-${e.id}`}
-                  key={`card-${e.id}`}
-                  data-page={e.number}
-                  onClick={(e) => cardClick(e)}
-                  className="targetCard w-14 h-24 md:w-32 md:h-44 z-10 bg-no-repeat bg-contain bg-center overflow-hidden"
-                  style={{ backgroundImage: `url(${cardBackImage})` }}
-                ></div>
-              ))}
-
-            {mePlayer?.length > 0 &&
-              fistAllCardRender.current.mePlayer.map((e, i) => (
-                <div
-                  id={`card-${e.id}`}
-                  key={`card-${e.id}`}
-                  data-page={e.number}
-                  onClick={(e) => cardClick(e)}
-                  className="mycard w-14 h-24 md:w-32 md:h-44 z-10 bg-no-repeat bg-contain bg-center overflow-hidden"
-                  style={{ backgroundImage: `url(${cardBackImage})` }}
-                ></div>
-              ))}
-
-            {otherPlayer?.length > 0 &&
-              fistAllCardRender.current.otherPlayer.map((e, i) => (
-                <div
-                  id={`card-${e.id}`}
-                  key={`card-${e.id}`}
-                  data-page={e.number}
-                  onClick={(e) => cardClick(e)}
-                  className="card w-14 h-24 md:w-32 md:h-44 z-10 bg-no-repeat bg-contain bg-center overflow-hidden"
-                  style={{ backgroundImage: `url(${cardBackImage})` }}
-                ></div>
-              ))} */}
-          </div>
+          ></div>
 
           <div
             className={`h-36 md:h-60 w-full flex justify-center items-center relative ${
@@ -1088,33 +1043,22 @@ console.log("diff===", myWinningPoint, otherWinningPoint)
         </div>
 
         <div className="flex justify-between md:justify-around w-full md:w-2/3 px-0 py-10 md:m-2 ">
-          {endGame.current ? (
-            <div className="mield bg-black bg-opacity-40 p-2 rounded-md relative">
-              <h1 className="text-white text-center capitalize font-semibold text-xs md:text-md pb-1.5">
-                Mield
-              </h1>
-              <div className="flex image-container rounded-md">
-                {mieldCard.slice(0, 3).map((e) => (
-                  <img
-                    src={e.url}
-                    className="w-2 h-3 md:w-8 md:h-10 partial-image"
-                  />
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className=" flex flex-col items-center">
-              <img
-                src="https://ahoygamesdotcom.b-cdn.net/wp-content/uploads/2022/05/Icon_GinRummy_1024_rounded.png"
-                className="w-16 h-14"
-              />
-              <span className="text-sm text-white font-bold py-2">
-                You ({myWinningPoint})
+          <div className=" flex flex-col items-center myUserIcon">
+            <img
+              src="https://ahoygamesdotcom.b-cdn.net/wp-content/uploads/2022/05/Icon_GinRummy_1024_rounded.png"
+              className="w-16 h-14 "
+            />
+            <span className="text-sm text-white font-bold py-2">
+              You ({myWinningPoint})
+            </span>
+            {deadWood.point <= 10 && (
+              <span>
+                +{Math.abs(deadWoodotherPlayer.point - deadWood.point)}
               </span>
-            </div>
-          )}
+            )}
+          </div>
 
-          {startGame && (
+          {startGame ? (
             <div className="deadwood bg-black bg-opacity-40 p-2 rounded-md">
               <h1 className="text-white text-center capitalize font-semibold text-xs md:text-md pb-1.5">
                 Deadwood ({deadWood.point})
@@ -1128,6 +1072,8 @@ console.log("diff===", myWinningPoint, otherWinningPoint)
                 ))}
               </div>
             </div>
+          ) : (
+            <div></div>
           )}
         </div>
 

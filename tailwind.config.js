@@ -10,7 +10,7 @@ module.exports = {
       keyframes: {
         scaleDown: {
           '0%': { transform: 'scale(1.5)' },
-          '100%': { transform: 'scale(0.8)' },
+          '100%': { transform: 'scale(0.5)' },
         },
       },
       animation: {
