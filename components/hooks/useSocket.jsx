@@ -9,7 +9,7 @@ console.log("isConnected", isConnected)
   useEffect(() => {
     const socket = getSocket();
     if (!socket) {
-      initiateSocketConnection('http://localhost:3000'); // Replace with your server URL
+      initiateSocketConnection(window.location.origin); // Replace with your server URL
       // initiateSocketConnection('http://localhost:8080'); // Replace with your server URL
     }
 
