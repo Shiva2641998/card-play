@@ -72,6 +72,7 @@ body {
 .mieldCard {
   position: relative;
   display: block;
+  /* margin-right: 30%; */
 }
 
 .mieldCard::before {
