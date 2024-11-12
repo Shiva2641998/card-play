@@ -7,7 +7,7 @@ function page() {
   return (
     <div className="bg-black">
       <div className="fixed bg-black bg-opacity-50 w-screen h-screen top-0 left-0 z-10"></div>
-      <video src="/pokerVideo.mp4" className="z-0 h-dvh" autoPlay loop muted />
+      <video src="/pokerVideo.mp4" className="z-0 h-screen w-screen" autoPlay loop muted />
       <div className="w-screen h-screen top-0 left-0 z-20 fixed p-20">
         <Link href={"/freeGame"}>
           <div className="lg:absolute top-20 left-20">

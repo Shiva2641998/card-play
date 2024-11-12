@@ -1,6 +1,7 @@
 const { createServer } = require('http');  // Using require for CommonJS
 const next = require('next');
 const { Server } = require('socket.io');
+const { parse } = require('url');
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
@@ -12,7 +13,17 @@ const handle = app.getRequestHandler();
 const roomUsers = new Map();
 
 app.prepare().then(() => {
-  const httpServer = createServer(handle);
+  const httpServer = createServer((req, res) => {
+    const parsedUrl = parse(req.url, true)
+    handle(req, res, parsedUrl)
+  }).listen(port, ()=>{
+    console.log(
+      `> Server listening at http://localhost:${port} as ${
+        dev ? 'development' : process.env.NODE_ENV
+      }`
+    )
+  }) 
+  // createServer(handle);
 
   const io = new Server(httpServer);
 
@@ -56,16 +67,16 @@ console.log(usersInRoom,"usersInRoom")
     });
   });
 
-  httpServer
-    .once("error", (err) => {
-      console.error(err);
-      process.exit(1);
-    })
-    .listen(port, () => {
-      console.log(
-        `> Server listening at http://localhost:${port} as ${
-          dev ? 'development' : process.env.NODE_ENV
-        }`
-      )
-    });
+  // httpServer
+  //   .once("error", (err) => {
+  //     console.error(err);
+  //     process.exit(1);
+  //   })
+  //   .listen(port, () => {
+  //     console.log(
+  //       `> Server listening at http://localhost:${port} as ${
+  //         dev ? 'development' : process.env.NODE_ENV
+  //       }`
+  //     )
+  //   });
 });
