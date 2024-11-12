@@ -3,14 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-     "dev": "nodemon server.js",
+    "dev": "nodemon server.js",
     "build": "next build",
-    "start": "node dist/server.js"
+    "start": "nodemon server.js"
   },
   "dependencies": {
     "axios": "^1.7.7",
     "gsap": "^3.12.5",
     "next": "15.0.1",
+    "nodemon": "^3.1.7",
     "react": "19.0.0-rc-69d4b800-20241021",
     "react-dom": "19.0.0-rc-69d4b800-20241021",
     "react-use": "^17.5.1",
