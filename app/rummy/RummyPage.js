@@ -53,12 +53,18 @@ export default function RummyPage() {
   const searchParams = useSearchParams();
   const roomId = searchParams.get("id");
   const GuestroomId = searchParams.get("guestid");
-
+  
   // console.log("roomId ::", roomId)
+  
+  const createRoom = useCallback(
+    () => {
+      const socket = getSocket();
+      console.log("socket===>", socket, " - ", GuestroomId , " - ", roomId);
+    if(!socket) return
 
-  const createRoom = () => {
+    myChance.current = roomId ? true : false;
+    onlyTargetPick.current = roomId ? true : false;
     // const newRoomId = prompt("Enter room ID to create:");
-    console.log("socket===>", socket, " - ", GuestroomId , " - ", roomId);
 
     // console.log("roomId ::", roomId);
     socket.emit("createRoom", {
@@ -70,12 +76,16 @@ export default function RummyPage() {
           targetCard: fistAllCardRender.current.targetCard,
         },
       });
-  };
+    },
+    [],
+  )
 
   useSocket("connect", (roomId) => {
     console.log("Connect :::: ")
     // if(roomId?.length > 0){
+      setTimeout(() => {
         createRoom();
+      }, 1000);
     // }
   });
 
@@ -84,30 +94,60 @@ export default function RummyPage() {
     GimRummyStart();
   });
   useSocket("guestJoin", (data) => {
-    console.log("guestJoin")
-    fistAllCardRender.current = data.card;
-    GimRummyStart();
+
+    console.log("guestJoin", data)
+    fistAllCardRender.current = data;
+    addGuestCard();
+    setleftCard(data.leftCard);
+    setmePlayer(data.mePlayer);
+    setotherPlayer(data.otherPlayer);
+    settargetCard(data.targetCard);
+    setTimeout(() => {
+      GimRummyStart();
+    }, 1000);
   });
 console.log("fistAllCardRender.current", fistAllCardRender.current)
   useSocket("roomCreated", (roomId) => {
     console.log(`Room created: ${roomId}`);
   });
 
-  useEffect(() => {
-    if (!myChance.current && !endGame.current) {
-      setTimeout(() => {
-        document.getElementById("otherPick").click();
-      }, 1000);
-      setTimeout(() => {
-        document.getElementById("otherDrop").click();
-      }, 2000);
-    }
-  }, [otherUserCanPick]);
+  const addGuestCard = () =>{
+    console.log("fistAllCardRender.current==", fistAllCardRender.current)
+    fistAllCardRender.current.leftCard.map((e) => leftCardUI(e));
+    fistAllCardRender.current.targetCard.map((e) => targetCardUI(e));
+    fistAllCardRender.current.mePlayer.map((e) => meCardUI(e));
+    fistAllCardRender.current.otherPlayer.map((e) => otherCardUI(e));
+  }
 
-  const pickTimeout = () => {
+  useSocket("dropCard", (data) => {
+    console.log("dropCard",myChance, data)
+    if(!myChance.current){
+      dropTimeout(data);
+      myChance.current = true;
+    }
+  });
+
+  useSocket("pickCard", (data) => {
+    console.log("pickCard", myChance.current, data)
+    if(myChance.current) return
+    pickTimeout(data)
+  });
+
+  // useEffect(() => {
+  //   if (!myChance.current && !endGame.current) {
+  //     setTimeout(() => {
+  //       document.getElementById("otherPick").click();
+  //     }, 1000);
+  //     setTimeout(() => {
+  //       document.getElementById("otherDrop").click();
+  //     }, 2000);
+  //   }
+  // }, [otherUserCanPick]);
+
+  const pickTimeout = (pc) => {
     // Simulate picking a card
     if (!myChance.current && !endGame.current) {
-      let pc = getRandomItems(leftCard, 1)?.[0];
+      // let pc = getRandomItems(leftCard, 1)?.[0];
       setleftCard((prevCards) => {
         return prevCards.filter((card) => card.id !== pc.id);
       });
@@ -119,9 +159,9 @@ console.log("fistAllCardRender.current", fistAllCardRender.current)
     }
   };
 
-  const dropTimeout = () => {
+  const dropTimeout = (dc) => {
     if (!myChance.current && !endGame.current) {
-      let dc = getRandomItems(otherPlayer, 1)?.[0];
+      // let dc = getRandomItems(otherPlayer, 1)?.[0];
       // let d = otherPlayer.filter((card) => card.id !== dc.id);
       // setotherPlayer(d);
       setotherPlayer((prevOtherPlayer) => {
@@ -359,6 +399,7 @@ console.log("fistAllCardRender.current", fistAllCardRender.current)
         CardDropSoundRefplayAudio();
         cards.classList.remove("leftCard");
         cards.classList.add("card");
+        cards.style.backgroundImage = `url(${cardBackImage})`;
       },
       onComplete: () => {},
     });
@@ -664,6 +705,7 @@ console.log("fistAllCardRender.current", fistAllCardRender.current)
 
   const cardClick = debounce(async (event) => {
     if (!myChance.current || winnerFound.current) return;
+    const socket = getSocket();
 
     let list = event.target.classList.value;
     if (list.includes("mycard")) {
@@ -673,6 +715,7 @@ console.log("fistAllCardRender.current", fistAllCardRender.current)
       setmePlayer((e) => {
         return e.filter((e) => e.id != findCards.id);
       });
+      socket.emit("dropCardBE", {data: findCards, id : roomId ? roomId : GuestroomId})
       dropCard(id);
     } else if (list.includes("leftCard")) {
       if (canPick.current) return;
@@ -687,6 +730,7 @@ console.log("fistAllCardRender.current", fistAllCardRender.current)
           .filter((e) => e)
           .sort((a, b) => a.number - b.number);
       });
+      socket.emit("pickCardBE", {data: findCards, id : roomId ? roomId : GuestroomId})
       pickCard(findCards);
     } else if (list.includes("target")) {
       if (canPick.current) return;
@@ -700,6 +744,7 @@ console.log("fistAllCardRender.current", fistAllCardRender.current)
           .filter((e) => e)
           .sort((a, b) => a.number - b.number);
       });
+      socket.emit("pickCardBE", {data: findCards, id : roomId ? roomId : GuestroomId})
       pickCard(findCards);
       if (onlyTargetPick.current) onlyTargetPick.current = false;
     }
@@ -759,7 +804,7 @@ console.log("fistAllCardRender.current", fistAllCardRender.current)
           getCard();
           myChance.current = true;
           canPick.current = false;
-          onlyTargetPick.current = true;
+          // onlyTargetPick.current = true;
           setstartGame(false);
           setTimeout(() => {
             GimRummyStart();

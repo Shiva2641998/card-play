@@ -8,6 +8,7 @@ export const initiateSocketConnection = (url) => {
     socket = io(url);
     console.log("Socket connection initiated");
   }
+  console.log("Socket Enter", socket)
   return socket;
 };
 

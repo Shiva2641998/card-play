@@ -56,6 +56,16 @@ app.prepare().then(() => {
       // io.to(userId).emit('userList', roomUsers.get(userId));  // Send updated user list to all users in the room
     });
 
+    socket.on("pickCardBE", (data) => {
+      console.log("pick data", data)
+      socket.to(data.id).emit("pickCard", data.data);
+    })
+
+    socket.on("dropCardBE", (data)=>{
+      console.log("drop data", data)
+      socket.to(data.id).emit("dropCard", data.data);
+    })
+
     socket.on("disconnect", () => {
       console.log("Socket.IO client disconnected:", socket.id);
     });
