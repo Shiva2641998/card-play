@@ -112,6 +112,7 @@ console.log("fistAllCardRender.current", fistAllCardRender.current)
   });
 
   const addGuestCard = () =>{
+    document.getElementById("startGame").innerHTML = "";
     console.log("fistAllCardRender.current==", fistAllCardRender.current)
     fistAllCardRender.current.leftCard.map((e) => leftCardUI(e));
     fistAllCardRender.current.targetCard.map((e) => targetCardUI(e));
@@ -188,7 +189,7 @@ console.log("fistAllCardRender.current", fistAllCardRender.current)
     return left;
   }
 
-  async function getCard() {
+  async function getCard(sendReq = false) {
     if (!roomId) return;
 
     document.getElementById("leftDiv").innerHTML = "";
@@ -230,6 +231,15 @@ console.log("fistAllCardRender.current", fistAllCardRender.current)
     fistAllCardRender.current.mePlayer.map((e) => meCardUI(e));
     fistAllCardRender.current.otherPlayer.map((e) => otherCardUI(e));
     // createRoom();
+    if(sendReq){
+      socket.emit("nextRoundStart",  {data: {
+        mePlayer: fistAllCardRender.current.otherPlayer,
+        leftCard: fistAllCardRender.current.leftCard,
+        otherPlayer: fistAllCardRender.current.mePlayer,
+        targetCard: fistAllCardRender.current.targetCard,
+      }, id : roomId ? roomId : GuestroomId})
+    }
+
   }
 
   useLayoutEffect(() => {
@@ -257,9 +267,10 @@ console.log("fistAllCardRender.current", fistAllCardRender.current)
     DistributeCard.current.currentTime = 0; // Reset to the beginning
   };
 
-  const GimRummyStart = async () => {
+  const GimRummyStart = async (start = true) => {
     // DistributeCardplayAudio();
     // other Player Card
+    if(!start) return
     if (endGame.current || winnerFound.current) return;
     const otherUserCardDiv = document.getElementById("otherUserCard");
     // Get the state of elements, but only if they exist in the DOM
@@ -609,6 +620,28 @@ console.log("fistAllCardRender.current", fistAllCardRender.current)
     // return { point, card: mePlayer };
   }, [mePlayer]);
 
+  const meldsCardFoundOtherUser = useMemo(() => {
+    // let point = mePlayer;
+
+    let mcsc = hasThreeOccurrencesOfThreeWithSameAnother(otherPlayer);
+    console.log("mcsc ", mcsc);
+    let filterIds = mcsc?.length > 0 ? mcsc?.map((e) => e.id) : [];
+
+    let mc = [...otherPlayer]
+      .map((e) =>
+        hasThreeOccurrencesOfThree(
+          otherPlayer.filter((e) => !filterIds?.includes(e.id)),
+          e
+        )
+          ? e
+          : false
+      )
+      .filter((d) => d);
+
+    return mcsc?.length > 0 ? [...mcsc, ...mc] : mc;
+    // return { point, card: otherPlayer };
+  }, [otherPlayer]);
+
   useEffect(() => {
     console.log("meldsCardFound  ", meldsCardFound);
     if (meldsCardFound?.length > 0) {
@@ -693,15 +726,22 @@ console.log("fistAllCardRender.current", fistAllCardRender.current)
   }, [mePlayer, meldsCardFound]);
 
   const deadWoodotherPlayer = useMemo(() => {
-    let point = otherPlayer.reduce((prev, total) => {
-      return (prev += total.number);
-    }, 0);
-    return { point, card: otherPlayer };
-  }, [otherPlayer]);
+    let filterIds =
+    meldsCardFoundOtherUser?.length > 0 ? meldsCardFoundOtherUser.map((d) => d.id) : [];
+  let newCard = otherPlayer.filter((e) =>
+    filterIds?.length > 0 ? !filterIds.includes(e.id) : e
+  );
+  let point = newCard.reduce((prev, total) => {
+    return (prev += total.number);
+  }, 0);
+  return { point, card: newCard };
+  }, [otherPlayer, meldsCardFoundOtherUser]);
 
-  const mieldCard = useMemo(() => {
-    return shuffleArray(mePlayer).slice(0, 3);
-  }, [mePlayer]);
+  console.log("meldsCardFoundOtherUser", deadWoodotherPlayer.point, startGame)
+
+  // const mieldCard = useMemo(() => {
+  //   return shuffleArray(mePlayer).slice(0, 3);
+  // }, [mePlayer]);
 
   const cardClick = debounce(async (event) => {
     if (!myChance.current || winnerFound.current) return;
@@ -750,30 +790,30 @@ console.log("fistAllCardRender.current", fistAllCardRender.current)
     }
   }, 200);
 
-  const OtherUserCardClick = async (event) => {
-    let list = event.target.classList.value;
+  // const OtherUserCardClick = async (event) => {
+  //   let list = event.target.classList.value;
 
-    if (list.includes("card")) {
-      let id = event.target.id;
-      let findCards = await findCard(event);
+  //   if (list.includes("card")) {
+  //     let id = event.target.id;
+  //     let findCards = await findCard(event);
 
-      setotherPlayer((e) => {
-        return e.filter((e) => e.id != findCards.id);
-      });
-      dropOtherCard(findCards);
-    } else if (list.includes("leftCard")) {
-      let findCards = await findCard(event);
-      setleftCard((e) => {
-        return e.filter((e) => e.id != findCards.id);
-      });
-      setmePlayer((e) => {
-        return [...e, findCards]
-          .filter((e) => e)
-          .sort((a, b) => a.number - b.number);
-      });
-      pickCard(findCards);
-    }
-  };
+  //     setotherPlayer((e) => {
+  //       return e.filter((e) => e.id != findCards.id);
+  //     });
+  //     dropOtherCard(findCards);
+  //   } else if (list.includes("leftCard")) {
+  //     let findCards = await findCard(event);
+  //     setleftCard((e) => {
+  //       return e.filter((e) => e.id != findCards.id);
+  //     });
+  //     setmePlayer((e) => {
+  //       return [...e, findCards]
+  //         .filter((e) => e)
+  //         .sort((a, b) => a.number - b.number);
+  //     });
+  //     pickCard(findCards);
+  //   }
+  // };
 
   const GimRummyReverseCard = async () => {
     // DistributeCardplayAudio();
@@ -801,13 +841,13 @@ console.log("fistAllCardRender.current", fistAllCardRender.current)
         },
         onComplete: () => {
           DistributeCardstopAudio();
-          getCard();
-          myChance.current = true;
+          getCard(roomId ? true : false);
+          // myChance.current = true;
           canPick.current = false;
           // onlyTargetPick.current = true;
           setstartGame(false);
           setTimeout(() => {
-            GimRummyStart();
+            GimRummyStart(roomId ? true : false);
           }, 1000);
         },
       });
@@ -937,11 +977,14 @@ console.log("fistAllCardRender.current", fistAllCardRender.current)
       (deadWood.point <= 10 || deadWoodotherPlayer.point <= 10) &&
       startGame
     ) {
+      myChance.current = false;
       let diff = Math.abs(deadWoodotherPlayer.point - deadWood.point);
       console.log("diff ", diff, deadWoodotherPlayer.point, deadWood.point);
       if (deadWoodotherPlayer.point > deadWood.point) {
+        myChance.current = true;
         setmyWinningPoint((p) => p + diff);
       } else if (deadWoodotherPlayer.point < deadWood.point) {
+        myChance.current = true;
         setotherWinningPoint((p) => p + diff);
       }
       endGame.current = true;
@@ -966,7 +1009,7 @@ console.log("fistAllCardRender.current", fistAllCardRender.current)
     //   // endGame.current = true;
     //   startAgain();
     // }
-  }, [myWinningPoint]);
+  }, [myWinningPoint, otherWinningPoint]);
 
   const leftCardUI = (e) => {
     const cardElement = document.createElement("div");
